@@ -1,0 +1,213 @@
+[{
+    "type": "newReview",
+    "data": {
+        "id": "d1UN8kcCH9G2ZvMTPUdu1jZ",
+        "title": "Test Review",
+        "description": "Just an example description here."
+    },
+    "id": 1438456772247.288,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newIteration",
+    "data": {
+        "id": "CxP6RcbDL2gdDj5MaawEgc5"
+    },
+    "id": 1438456772252.698,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newEntry",
+    "data": {
+        "iterationID": "CxP6RcbDL2gdDj5MaawEgc5",
+        "path": "$/TestProject/Dev/2015/TestProject.csproj",
+        "diskPath": "D:\\TFS_Data\\TestProject\\2015\\TestProject.csproj",
+        "content": "using System.Drawing.Printing;\r\nusing System.Reflection;\r\n\r\npublic class MultiPrintDocument : PrintDocument\r\n{\r\n  private PrintDocument[] _documents;\r\n  private int _docIndex;\r\n  private PrintEventArgs _args;\r\n\r\n  // constructors\r\n  public MultiPrintDocument(PrintDocument document1, PrintDocument document2)\r\n  {\r\n    _documents = new PrintDocument[] { document1, document2 };\r\n  }\r\n\r\n  public MultiPrintDocument(PrintDocument[] documents)\r\n  {\r\n    _documents = documents;\r\n  }\r\n\r\n  // overidden methods\r\n  protected override void OnBeginPrint(PrintEventArgs e)\r\n  {\r\n    base.OnBeginPrint(e);\r\n    if (_documents.Length == 0)\r\n      e.Cancel = true;\r\n\r\n    if (e.Cancel) return;\r\n\r\n    _args = e;\r\n    _docIndex = 0;  // reset current document index\r\n    CallMethod(_documents[_docIndex], \"OnBeginPrint\", e);\r\n  }\r\n\r\n  protected override void OnQueryPageSettings(QueryPageSettingsEventArgs e)\r\n  {\r\n    e.PageSettings = _documents[_docIndex].DefaultPageSettings;\r\n    CallMethod(_documents[_docIndex], \"OnQueryPageSettings\", e);\r\n    base.OnQueryPageSettings(e);\r\n  }\r\n\r\n  protected override void OnPrintPage(PrintPageEventArgs e)\r\n  {\r\n    CallMethod(_documents[_docIndex], \"OnPrintPage\", e);\r\n    base.OnPrintPage(e);\r\n    if (e.Cancel) return;\r\n    if (!e.HasMorePages)\r\n    {\r\n      CallMethod(_documents[_docIndex], \"OnEndPrint\", _args);\r\n      if (_args.Cancel) return;\r\n      _docIndex++;  // increments the current document index\r\n\r\n      if (_docIndex < _documents.Length)\r\n      {\r\n        // says that it has more pages (in others documents)\r\n        e.HasMorePages = true;\r\n        CallMethod(_documents[_docIndex], \"OnBeginPrint\", _args);\r\n      }\r\n    }\r\n  }\r\n\r\n  // use reflection to call protected methods of child documents\r\n  private void CallMethod(PrintDocument document, string methodName, object args)\r\n  {\r\n    typeof(PrintDocument).InvokeMember(methodName,\r\n      BindingFlags.InvokeMethod | BindingFlags.Instance | BindingFlags.NonPublic,\r\n      null, document, new object[] { args });\r\n  }\r\n}\r\n"
+    },
+    "id": 1438456772252.84,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newEntry",
+    "data": {
+        "iterationID": "CxP6RcbDL2gdDj5MaawEgc5",
+        "path": "$/TestProject/Dev/2015/UIStatic/TestProject.UIStatic/applications/web/view/DocumentPageActions.js",
+        "diskPath": "D:\\TFS_Data\\TestProject\\2015\\UIStatic\\TestProject.UIStatic\\applications\\web\\view\\DocumentPageActions.js",
+        "content": "using System.Drawing.Printing;\r\nusing System.Reflection;\r\n\r\npublic class MultiPrintDocument : PrintDocument\r\n{\r\n  private PrintDocument[] _documents;\r\n  private int _docIndex;\r\n  private PrintEventArgs _args;\r\n\r\n  // constructors\r\n  public MultiPrintDocument(PrintDocument document1, PrintDocument document2)\r\n  {\r\n    _documents = new PrintDocument[] { document1, document2 };\r\n  }\r\n\r\n  public MultiPrintDocument(PrintDocument[] documents)\r\n  {\r\n    _documents = documents;\r\n  }\r\n\r\n  // overidden methods\r\n  protected override void OnBeginPrint(PrintEventArgs e)\r\n  {\r\n    base.OnBeginPrint(e);\r\n    if (_documents.Length == 0)\r\n      e.Cancel = true;\r\n\r\n    if (e.Cancel) return;\r\n\r\n    _args = e;\r\n    _docIndex = 0;  // reset current document index\r\n    CallMethod(_documents[_docIndex], \"OnBeginPrint\", e);\r\n  }\r\n\r\n  protected override void OnQueryPageSettings(QueryPageSettingsEventArgs e)\r\n  {\r\n    e.PageSettings = _documents[_docIndex].DefaultPageSettings;\r\n    CallMethod(_documents[_docIndex], \"OnQueryPageSettings\", e);\r\n    base.OnQueryPageSettings(e);\r\n\r\n      CallMethod(_documents[_docIndex], \"OnEndPrint\", _args);\r\n      if (_args.Cancel)\r\n          return;\r\n      _docIndex++;\r\n  }\r\n\r\n\r\n  protected override void OnPrintPage(PrintPageEventArgs e)\r\n  {\r\n    CallMethod(_documents[_docIndex], \"OnPrintPage\", e);\r\n    base.OnPrintPage(e);\r\n    if (e.Cancel) return;\r\n    if (!e.HasMorePages)\r\n    {\r\n      CallMethod(_documents[_docIndex], \"OnEndPrint\", _args);\r\n      if (_args.Cancel) return;\r\n      _docIndex++;\r\n    }\r\n  }\r\n\r\n    // use reflection to call protected methods of child documents\r\n    private void CallMethod(PrintDocument document, string methodName, object args)\r\n    {\r\n        typeof(PrintDocument).InvokeMember(methodName,\r\n            BindingFlags.InvokeMethod | BindingFlags.Instance | BindingFlags.NonPublic,\r\n            null, document, new object[] { args });\r\n    }\r\n}\r\n"
+    },
+    "id": 1438456772253.218,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newEntry",
+    "data": {
+        "iterationID": "CxP6RcbDL2gdDj5MaawEgc5",
+        "path": "$/TestProject/Dev/2015/UIStatic/TestProject.UIStatic/applications/web/view/DocumentsList.js",
+        "diskPath": "D:\\TFS_Data\\TestProject\\2015\\UIStatic\\TestProject.UIStatic\\applications\\web\\view\\DocumentsList.js",
+        "content": "                // Opens the given combo dropdown and clicks the item with the given text\r\n                function clickCombo(comboComp, itemText, description) {\r\n                    return function (next) {\r\n                        t.chain({\r\n                            click: comboComp,\r\n                            desc: description\r\n                        }, function () {\r\n                            // Combo boundlist items aren't components and don't have useful attributes on them, we have to scan through\r\n                            // every item and look for the one with the expected text content\r\n                            var items = Array.prototype.slice.call(comboComp.getPicker().el.dom.querySelectorAll('.x-boundlist'))\r\n                                .filter(function (item) {\r\n                                    return item.innerText === itemText;\r\n                                });\r\n                            if (items.length !== 1) {\r\n                                t.fail('Failed to find item \"' + itemText + '\" in the combo box!');\r\n                            }\r\n                            t.click(items[0], next);\r\n\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\tconsole.log('foooo!');\r\n                        });\r\n                    };\r\n                }"
+    },
+    "id": 1438456772253.685,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newEntry",
+    "data": {
+        "iterationID": "CxP6RcbDL2gdDj5MaawEgc5",
+        "path": "$/TestProject/Dev/2015/UIStatic/TestProject.UIStatic/applications/web/view/DocumentImportWizard.js",
+        "diskPath": "D:\\TFS_Data\\TestProject\\2015\\UIStatic\\TestProject.UIStatic\\applications\\web\\view\\DocumentImportWizard.js",
+        "content": null
+    },
+    "id": 1438456772253.764,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newEntry",
+    "data": {
+        "iterationID": "CxP6RcbDL2gdDj5MaawEgc5",
+        "path": "$/TestProject/Dev/2015/UIStatic/TestProject.UIStatic/applications/web/controller/DocumentPageActions.js",
+        "diskPath": "D:\\TFS_Data\\TestProject\\2015\\UIStatic\\TestProject.UIStatic\\applications\\web\\controller\\DocumentPageActions.js",
+        "content": null
+    },
+    "id": 1438456772253.81,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newEntry",
+    "data": {
+        "iterationID": "CxP6RcbDL2gdDj5MaawEgc5",
+        "path": "$/TestProject/Dev/2015/UIStatic/TestProject.UIStatic/applications/web/resources/page-actions.css",
+        "diskPath": "D:\\TFS_Data\\TestProject\\2015\\UIStatic\\TestProject.UIStatic\\applications\\web\\resources\\page-actions.css",
+        "content": "                // Opens the given combo dropdown and clicks the item with the given text\r\n                function clickCombo(comboComp, itemText, description) {\r\n                    return function (next) {\r\n                        t.chain({\r\n                            click: comboComp,\r\n                            desc: description\r\n                        }, function () {\r\n                            // Combo boundlist items aren't components and don't have useful attributes on them, we have to scan through\r\n                            // every item and look for the one with the expected text content\r\n                            var items = Array.prototype.slice.call(comboComp.getPicker().el.dom.querySelectorAll('.x-boundlist'))\r\n                                .filter(function (item) {\r\n                                    return item.innerText === itemText;\r\n                                });\r\n                            if (items.length !== 1) {\r\n                                t.fail('Failed to find item \"' + itemText + '\" in the combo box!');\r\n                            }\r\n                            t.click(items[0], next);\r\n\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\tconsole.log('foooo!');\r\n                        });\r\n                    };\r\n                }"
+    },
+    "id": 1438456772253.852,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newEntry",
+    "data": {
+        "iterationID": "CxP6RcbDL2gdDj5MaawEgc5",
+        "path": "$/TestProject/Dev/2015/UIStatic/TestProject.UIStatic/applications/web/resources/import-docs.cs",
+        "diskPath": "D:\\TFS_Data\\TestProject\\2015\\UIStatic\\TestProject.UIStatic\\applications\\web\\resources\\import-docs.cs",
+        "content": "using System.Drawing.Printing;\r\nusing System.Reflection;\r\n\r\npublic class MultiPrintDocument : PrintDocument\r\n{\r\n  private PrintDocument[] _documents;\r\n  private int _docIndex;\r\n  private PrintEventArgs _args;\r\n\r\n  // constructors\r\n  public MultiPrintDocument(PrintDocument document1, PrintDocument document2)\r\n  {\r\n    _documents = new PrintDocument[] { document1, document2 };\r\n  }\r\n\r\n  public MultiPrintDocument(PrintDocument[] documents)\r\n  {\r\n    _documents = documents;\r\n  }\r\n\r\n  // overidden methods\r\n  protected override void OnBeginPrint(PrintEventArgs e)\r\n  {\r\n    base.OnBeginPrint(e);\r\n    if (_documents.Length == 0)\r\n      e.Cancel = true;\r\n\r\n    if (e.Cancel) return;\r\n\r\n    _args = e;\r\n    _docIndex = 0;  // reset current document index\r\n    CallMethod(_documents[_docIndex], \"OnBeginPrint\", e);\r\n  }\r\n\r\n  protected override void OnQueryPageSettings(QueryPageSettingsEventArgs e)\r\n  {\r\n    e.PageSettings = _documents[_docIndex].DefaultPageSettings;\r\n    CallMethod(_documents[_docIndex], \"OnQueryPageSettings\", e);\r\n    base.OnQueryPageSettings(e);\r\n  }\r\n\r\n  protected override void OnPrintPage(PrintPageEventArgs e)\r\n  {\r\n    CallMethod(_documents[_docIndex], \"OnPrintPage\", e);\r\n    base.OnPrintPage(e);\r\n    if (e.Cancel) return;\r\n    if (!e.HasMorePages)\r\n    {\r\n      CallMethod(_documents[_docIndex], \"OnEndPrint\", _args);\r\n      if (_args.Cancel) return;\r\n      _docIndex++;  // increments the current document index\r\n\r\n      if (_docIndex < _documents.Length)\r\n      {\r\n        // says that it has more pages (in others documents)\r\n        e.HasMorePages = true;\r\n        CallMethod(_documents[_docIndex], \"OnBeginPrint\", _args);\r\n      }\r\n    }\r\n  }\r\n\r\n  // use reflection to call protected methods of child documents\r\n  private void CallMethod(PrintDocument document, string methodName, object args)\r\n  {\r\n    typeof(PrintDocument).InvokeMember(methodName,\r\n      BindingFlags.InvokeMethod | BindingFlags.Instance | BindingFlags.NonPublic,\r\n      null, document, new object[] { args });\r\n  }\r\n}\r\n"
+    },
+    "id": 1438456772253.893,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newIteration",
+    "data": {
+        "id": "kVAFkBajRLpkVf8rZMsAYR6"
+    },
+    "id": 1438456772254.002,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newEntry",
+    "data": {
+        "iterationID": "kVAFkBajRLpkVf8rZMsAYR6",
+        "path": "$/TestProject/Dev/2015/TestProject.csproj",
+        "diskPath": "D:\\TFS_Data\\TestProject\\2015\\TestProject.csproj",
+        "content": "using System.Drawing.Printing;\r\nusing System.Reflection;\r\n\r\npublic class MultiPrintDocument : PrintDocument\r\n{\r\n  private PrintDocument[] _documents;\r\n  private int _docIndex;\r\n  private PrintEventArgs _args;\r\n\r\n  // constructors\r\n  public MultiPrintDocument(PrintDocument document1, PrintDocument document2)\r\n  {\r\n    _documents = new PrintDocument[] { document1, document2 };\r\n  }\r\n\r\n  public MultiPrintDocument(PrintDocument[] documents)\r\n  {\r\n    _documents = documents;\r\n  }\r\n\r\n  // overidden methods\r\n  protected override void OnBeginPrint(PrintEventArgs e)\r\n  {\r\n    base.OnBeginPrint(e);\r\n    if (_documents.Length == 0)\r\n      e.Cancel = true;\r\n\r\n    if (e.Cancel) return;\r\n\r\n    _args = e;\r\n    _docIndex = 0;  // reset current document index\r\n    CallMethod(_documents[_docIndex], \"OnBeginPrint\", e);\r\n  }\r\n\r\n  protected override void OnQueryPageSettings(QueryPageSettingsEventArgs e)\r\n  {\r\n    e.PageSettings = _documents[_docIndex].DefaultPageSettings;\r\n    CallMethod(_documents[_docIndex], \"OnQueryPageSettings\", e);\r\n    base.OnQueryPageSettings(e);\r\n  }\r\n\r\n  protected override void OnPrintPage(PrintPageEventArgs e)\r\n  {\r\n    CallMethod(_documents[_docIndex], \"OnPrintPage\", e);\r\n    base.OnPrintPage(e);\r\n    if (e.Cancel) return;\r\n    if (!e.HasMorePages)\r\n    {\r\n      CallMethod(_documents[_docIndex], \"OnEndPrint\", _args);\r\n      if (_args.Cancel) return;\r\n      _docIndex++;  // increments the current document index\r\n\r\n      if (_docIndex < _documents.Length)\r\n      {\r\n        // says that it has more pages (in others documents)\r\n        e.HasMorePages = true;\r\n        CallMethod(_documents[_docIndex], \"OnBeginPrint\", _args);\r\n      }\r\n    }\r\n  }\r\n\r\n  // use reflection to call protected methods of child documents\r\n  private void CallMethod(PrintDocument document, string methodName, object args)\r\n  {\r\n    typeof(PrintDocument).InvokeMember(methodName,\r\n      BindingFlags.InvokeMethod | BindingFlags.Instance | BindingFlags.NonPublic,\r\n      null, document, new object[] { args });\r\n  }\r\n}\r\n"
+    },
+    "id": 1438456772254.154,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newEntry",
+    "data": {
+        "iterationID": "kVAFkBajRLpkVf8rZMsAYR6",
+        "path": "$/TestProject/Dev/2015/UIStatic/TestProject.UIStatic/applications/web/view/DocumentPageActions.js",
+        "diskPath": "D:\\TFS_Data\\TestProject\\2015\\UIStatic\\TestProject.UIStatic\\applications\\web\\view\\DocumentPageActions.js",
+        "content": "\r\n                // Opens the given combo dropdown and clicks the item with the given text\r\n                function clickComboItem(comboComp, itemText, description) {\r\n                    return function (next) {\r\n                        t.chain({\r\n                            click: comboComp,\r\n                            desc: description\r\n                        }, function () {\r\n                            // Blar, combo boundlist items aren't components and don't have useful attributes on them, we have to scan through\r\n                            // every item and look for the one with the expected text content\r\n                            var items = Array.prototype.slice.call(comboComp.getPicker().el.dom.querySelectorAll('.x-boundlist-item'))\r\n                                .filter(function (item) {\r\n                                    return item.innerText === itemText;\r\n                                });\r\n                            if (items.length !== 1) {\r\n                                t.fail('Failed to find item \"' + itemText + '\" in the combo box!');\r\n                            }\r\n                            t.click(items[0], next);\r\n                        });\r\n                    };\r\n                }"
+    },
+    "id": 1438456772254.205,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newEntry",
+    "data": {
+        "iterationID": "kVAFkBajRLpkVf8rZMsAYR6",
+        "path": "$/TestProject/Dev/2015/UIStatic/TestProject.UIStatic/applications/web/view/DocumentsList.js",
+        "diskPath": "D:\\TFS_Data\\TestProject\\2015\\UIStatic\\TestProject.UIStatic\\applications\\web\\view\\DocumentsList.js",
+        "content": "using System.Drawing.Printing;\r\nusing System.Reflection;\r\n\r\npublic class MultiPrintDocument : PrintDocument\r\n{\r\n  private PrintDocument[] _documents;\r\n  private int _docIndex;\r\n  private PrintEventArgs _args;\r\n\r\n  // constructors\r\n  public MultiPrintDocument(PrintDocument document1, PrintDocument document2)\r\n  {\r\n    _documents = new PrintDocument[] { document1, document2 };\r\n  }\r\n\r\n  public MultiPrintDocument(PrintDocument[] documents)\r\n  {\r\n    _documents = documents;\r\n  }\r\n\r\n  // overidden methods\r\n  protected override void OnBeginPrint(PrintEventArgs e)\r\n  {\r\n    base.OnBeginPrint(e);\r\n    if (_documents.Length == 0)\r\n      e.Cancel = true;\r\n\r\n    if (e.Cancel) return;\r\n\r\n    _args = e;\r\n    _docIndex = 0;  // reset current document index\r\n    CallMethod(_documents[_docIndex], \"OnBeginPrint\", e);\r\n  }\r\n\r\n  protected override void OnQueryPageSettings(QueryPageSettingsEventArgs e)\r\n  {\r\n    e.PageSettings = _documents[_docIndex].DefaultPageSettings;\r\n    CallMethod(_documents[_docIndex], \"OnQueryPageSettings\", e);\r\n    base.OnQueryPageSettings(e);\r\n\r\n      CallMethod(_documents[_docIndex], \"OnEndPrint\", _args);\r\n      if (_args.Cancel)\r\n          return;\r\n      _docIndex++;\r\n  }\r\n\r\n\r\n  protected override void OnPrintPage(PrintPageEventArgs e)\r\n  {\r\n    CallMethod(_documents[_docIndex], \"OnPrintPage\", e);\r\n    base.OnPrintPage(e);\r\n    if (e.Cancel) return;\r\n    if (!e.HasMorePages)\r\n    {\r\n      CallMethod(_documents[_docIndex], \"OnEndPrint\", _args);\r\n      if (_args.Cancel) return;\r\n      _docIndex++;\r\n    }\r\n  }\r\n\r\n    // use reflection to call protected methods of child documents\r\n    private void CallMethod(PrintDocument document, string methodName, object args)\r\n    {\r\n        typeof(PrintDocument).InvokeMember(methodName,\r\n            BindingFlags.InvokeMethod | BindingFlags.Instance | BindingFlags.NonPublic,\r\n            null, document, new object[] { args });\r\n    }\r\n}\r\n"
+    },
+    "id": 1438456772254.234,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newEntry",
+    "data": {
+        "iterationID": "kVAFkBajRLpkVf8rZMsAYR6",
+        "path": "$/TestProject/Dev/2015/UIStatic/TestProject.UIStatic/applications/web/view/DocumentImportWizard.js",
+        "diskPath": "D:\\TFS_Data\\TestProject\\2015\\UIStatic\\TestProject.UIStatic\\applications\\web\\view\\DocumentImportWizard.js",
+        "content": "                // Opens the given combo dropdown and clicks the item with the given text\r\n                function clickCombo(comboComp, itemText, description) {\r\n                    return function (next) {\r\n                        t.chain({\r\n                            click: comboComp,\r\n                            desc: description\r\n                        }, function () {\r\n                            // Combo boundlist items aren't components and don't have useful attributes on them, we have to scan through\r\n                            // every item and look for the one with the expected text content\r\n                            var items = Array.prototype.slice.call(comboComp.getPicker().el.dom.querySelectorAll('.x-boundlist'))\r\n                                .filter(function (item) {\r\n                                    return item.innerText === itemText;\r\n                                });\r\n                            if (items.length !== 1) {\r\n                                t.fail('Failed to find item \"' + itemText + '\" in the combo box!');\r\n                            }\r\n                            t.click(items[0], next);\r\n\t\t\t\t\t\t\t\r\n\t\t\t\t\t\t\tconsole.log('foooo!');\r\n                        });\r\n                    };\r\n                }"
+    },
+    "id": 1438456772254.262,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newEntry",
+    "data": {
+        "iterationID": "kVAFkBajRLpkVf8rZMsAYR6",
+        "path": "$/TestProject/Dev/2015/UIStatic/TestProject.UIStatic/applications/web/controller/DocumentPageActions.js",
+        "diskPath": "D:\\TFS_Data\\TestProject\\2015\\UIStatic\\TestProject.UIStatic\\applications\\web\\controller\\DocumentPageActions.js",
+        "content": "\r\n                // Opens the given combo dropdown and clicks the item with the given text\r\n                function clickComboItem(comboComp, itemText, description) {\r\n                    return function (next) {\r\n                        t.chain({\r\n                            click: comboComp,\r\n                            desc: description\r\n                        }, function () {\r\n                            // Blar, combo boundlist items aren't components and don't have useful attributes on them, we have to scan through\r\n                            // every item and look for the one with the expected text content\r\n                            var items = Array.prototype.slice.call(comboComp.getPicker().el.dom.querySelectorAll('.x-boundlist-item'))\r\n                                .filter(function (item) {\r\n                                    return item.innerText === itemText;\r\n                                });\r\n                            if (items.length !== 1) {\r\n                                t.fail('Failed to find item \"' + itemText + '\" in the combo box!');\r\n                            }\r\n                            t.click(items[0], next);\r\n                        });\r\n                    };\r\n                }"
+    },
+    "id": 1438456772254.289,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newEntry",
+    "data": {
+        "iterationID": "kVAFkBajRLpkVf8rZMsAYR6",
+        "path": "$/TestProject/Dev/2015/UIStatic/TestProject.UIStatic/applications/web/resources/page-actions.css",
+        "diskPath": "D:\\TFS_Data\\TestProject\\2015\\UIStatic\\TestProject.UIStatic\\applications\\web\\resources\\page-actions.css",
+        "content": "using System.Drawing.Printing;\r\nusing System.Reflection;\r\n\r\npublic class MultiPrintDocument : PrintDocument\r\n{\r\n  private PrintDocument[] _documents;\r\n  private int _docIndex;\r\n  private PrintEventArgs _args;\r\n\r\n  // constructors\r\n  public MultiPrintDocument(PrintDocument document1, PrintDocument document2)\r\n  {\r\n    _documents = new PrintDocument[] { document1, document2 };\r\n  }\r\n\r\n  public MultiPrintDocument(PrintDocument[] documents)\r\n  {\r\n    _documents = documents;\r\n  }\r\n\r\n  // overidden methods\r\n  protected override void OnBeginPrint(PrintEventArgs e)\r\n  {\r\n    base.OnBeginPrint(e);\r\n    if (_documents.Length == 0)\r\n      e.Cancel = true;\r\n\r\n    if (e.Cancel) return;\r\n\r\n    _args = e;\r\n    _docIndex = 0;  // reset current document index\r\n    CallMethod(_documents[_docIndex], \"OnBeginPrint\", e);\r\n  }\r\n\r\n  protected override void OnQueryPageSettings(QueryPageSettingsEventArgs e)\r\n  {\r\n    e.PageSettings = _documents[_docIndex].DefaultPageSettings;\r\n    CallMethod(_documents[_docIndex], \"OnQueryPageSettings\", e);\r\n    base.OnQueryPageSettings(e);\r\n  }\r\n\r\n  protected override void OnPrintPage(PrintPageEventArgs e)\r\n  {\r\n    CallMethod(_documents[_docIndex], \"OnPrintPage\", e);\r\n    base.OnPrintPage(e);\r\n    if (e.Cancel) return;\r\n    if (!e.HasMorePages)\r\n    {\r\n      CallMethod(_documents[_docIndex], \"OnEndPrint\", _args);\r\n      if (_args.Cancel) return;\r\n      _docIndex++;  // increments the current document index\r\n\r\n      if (_docIndex < _documents.Length)\r\n      {\r\n        // says that it has more pages (in others documents)\r\n        e.HasMorePages = true;\r\n        CallMethod(_documents[_docIndex], \"OnBeginPrint\", _args);\r\n      }\r\n    }\r\n  }\r\n\r\n  // use reflection to call protected methods of child documents\r\n  private void CallMethod(PrintDocument document, string methodName, object args)\r\n  {\r\n    typeof(PrintDocument).InvokeMember(methodName,\r\n      BindingFlags.InvokeMethod | BindingFlags.Instance | BindingFlags.NonPublic,\r\n      null, document, new object[] { args });\r\n  }\r\n}\r\n"
+    },
+    "id": 1438456772254.317,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "newEntry",
+    "data": {
+        "iterationID": "kVAFkBajRLpkVf8rZMsAYR6",
+        "path": "$/TestProject/Dev/2015/UIStatic/TestProject.UIStatic/applications/web/resources/import-docs.cs",
+        "diskPath": "D:\\TFS_Data\\TestProject\\2015\\UIStatic\\TestProject.UIStatic\\applications\\web\\resources\\import-docs.cs",
+        "content": "using System.Drawing.Printing;\r\nusing System.Reflection;\r\n\r\npublic class MultiPrintDocument : PrintDocument\r\n{\r\n  private PrintDocument[] _documents;\r\n  private int _docIndex;\r\n  private PrintEventArgs _args;\r\n\r\n  // constructors\r\n  public MultiPrintDocument(PrintDocument document1, PrintDocument document2)\r\n  {\r\n    _documents = new PrintDocument[] { document1, document2 };\r\n  }\r\n\r\n  public MultiPrintDocument(PrintDocument[] documents)\r\n  {\r\n    _documents = documents;\r\n  }\r\n\r\n  // overidden methods\r\n  protected override void OnBeginPrint(PrintEventArgs e)\r\n  {\r\n    base.OnBeginPrint(e);\r\n    if (_documents.Length == 0)\r\n      e.Cancel = true;\r\n\r\n    if (e.Cancel) return;\r\n\r\n    _args = e;\r\n    _docIndex = 0;  // reset current document index\r\n    CallMethod(_documents[_docIndex], \"OnBeginPrint\", e);\r\n  }\r\n\r\n  protected override void OnQueryPageSettings(QueryPageSettingsEventArgs e)\r\n  {\r\n    e.PageSettings = _documents[_docIndex].DefaultPageSettings;\r\n    CallMethod(_documents[_docIndex], \"OnQueryPageSettings\", e);\r\n    base.OnQueryPageSettings(e);\r\n  }\r\n\r\n  protected override void OnPrintPage(PrintPageEventArgs e)\r\n  {\r\n    CallMethod(_documents[_docIndex], \"OnPrintPage\", e);\r\n    base.OnPrintPage(e);\r\n    if (e.Cancel) return;\r\n    if (!e.HasMorePages)\r\n    {\r\n      CallMethod(_documents[_docIndex], \"OnEndPrint\", _args);\r\n      if (_args.Cancel) return;\r\n      _docIndex++;  // increments the current document index\r\n\r\n      if (_docIndex < _documents.Length)\r\n      {\r\n        // says that it has more pages (in others documents)\r\n        e.HasMorePages = true;\r\n        CallMethod(_documents[_docIndex], \"OnBeginPrint\", _args);\r\n      }\r\n    }\r\n  }\r\n\r\n  // use reflection to call protected methods of child documents\r\n  private void CallMethod(PrintDocument document, string methodName, object args)\r\n  {\r\n    typeof(PrintDocument).InvokeMember(methodName,\r\n      BindingFlags.InvokeMethod | BindingFlags.Instance | BindingFlags.NonPublic,\r\n      null, document, new object[] { args });\r\n  }\r\n}\r\n"
+    },
+    "id": 1438456772254.343,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "addComment",
+    "data": {
+        "path": "$/testproject/dev/2015/testproject.csproj",
+        "location": "001,00005,000,99997,line",
+        "id": "cQjMMK8RreRMzDQrah8E7yo",
+        "code": "  private PrintDocument[] _documents;\n  private int _docIndex;\n  private PrintEventArgs _args; ",
+        "note": ""
+    },
+    "id": 1438456821679.931,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "editComment",
+    "data": {
+        "id": "cQjMMK8RreRMzDQrah8E7yo",
+        "edited": "code",
+        "value": "  private PrintDocument[] _documents;\n  private int _docIndex;\n  private PrintEventArgs _args;"
+    },
+    "id": 1438456833429.3,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "editComment",
+    "data": {
+        "id": "cQjMMK8RreRMzDQrah8E7yo",
+        "edited": "note",
+        "value": " "
+    },
+    "id": 1438456900095.705,
+    "user": "John Doe <john.doe@example.com>"
+}, {
+    "type": "addComment",
+    "data": {
+        "path": "$/testproject/dev/2015/testproject.csproj",
+        "location": "001,00010,000,99996,line",
+        "id": "EvbpEfT6qL2TE4pzq6xVAbU",
+        "code": "  public MultiPrintDocument(PrintDocument document1, PrintDocument document2)\n  {\n    _documents = new PrintDocument[] { document1, document2 };\n  } ",
+        "note": ""
+    },
+    "id": 1438456925378.365,
+    "user": "John Smith <john.smith@example.com>"
+}, {
+    "type": "editComment",
+    "data": {
+        "id": "EvbpEfT6qL2TE4pzq6xVAbU",
+        "edited": "note",
+        "value": "Here is a comment?"
+    },
+    "id": 1438458367853.094,
+    "user": "John Doe <john.doe@example.com>"
+}]
