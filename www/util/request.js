@@ -9,7 +9,7 @@ define([], function () {
 					if (req.status === 200) {
 						resolve(req.response);
 					} else {
-						reject(req.response);
+						reject(req);
 					}
 				}
 			};
