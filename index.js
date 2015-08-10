@@ -2,21 +2,9 @@ var fs = require('fs');
 var express = require('express');
 var path = require('path');
 var WebSocketServer = require('ws').Server;
+var http = require('http');
 	
 var PORT = 3000;
-
-
-
-
-var wss = new WebSocketServer({ port: PORT });
-wss.on('connection', function connection(ws) {
-	ws.on('message', function incoming(message) {
-		console.log('received: %s', message);
-	});
-	
-	ws.send('something');
-});
-
 
 
 
@@ -43,9 +31,19 @@ app.get('/api/review/:id.json', function (req, res) {
 	})
 });
 
-var server = app.listen(PORT, function () {
-	var host = server.address().address;
-	var port = server.address().port;
+var server = http.createServer(app);
+server.listen(PORT);
+
+
+
+
+var wss = new WebSocketServer({ server: server });
+wss.on('connection', function connection(ws) {
+	console.log('client connected');
 	
-	console.log('Example app listening at http://%s:%s', host, port);
-})
+	ws.on('message', function incoming(message) {
+		console.log('received: %s', message);
+	});
+	
+	ws.send('something');
+});
