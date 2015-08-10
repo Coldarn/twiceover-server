@@ -1,0 +1,19 @@
+{
+  "name": "Twice-Over Server",
+  "version": "0.1.0",
+  "description": "Server backend for sharing code reviews made in twiceover-client",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Coldarn/twiceover-server.git"
+  },
+  "author": "Collin Arnold",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Coldarn/twiceover-server/issues"
+  },
+  "homepage": "https://github.com/Coldarn/twiceover-server#readme"
+}
