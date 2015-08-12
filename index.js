@@ -7,7 +7,6 @@ var http = require('http');
 var PORT = 3000;
 
 
-
 var app = express();
 app.use(express.static(path.join(__dirname, 'www')));
 
@@ -42,8 +41,32 @@ wss.on('connection', function connection(ws) {
 	console.log('client connected');
 	
 	ws.on('message', function incoming(message) {
-		console.log('received: %s', message);
+        event = JSON.parse(message);
+		
+		if (event.type === 'time-sync') {
+			event.serverReceive = highResTime();
+			event.serverSend = highResTime();
+			
+			ws.send(JSON.stringify(event));
+		}
 	});
-	
-	ws.send('something');
+	ws.on('close', function closing(code, message) {
+		console.log('client disconnect:', code, message);
+	});
 });
+
+
+
+
+// Converts the [seconds, nanoseconds] structs into ms doubles
+function hrms() {
+	var t = process.hrtime();
+	return t[0] * 1e3 + t[1] / 1e6;
+}
+
+var highResTimeBase = Date.now() - hrms();
+
+// Returns JS ms now timestamps with at least 100 ns precision 
+function highResTime() {
+	return highResTimeBase + hrms();
+}

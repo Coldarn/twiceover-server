@@ -1,5 +1,5 @@
 define([
-	'util/request'
+	'util/Request'
 ], function (Request) {
 	Request.get('/api/reviews').then(function (response) {
 		document.querySelector('.container-inner ul').innerHTML = JSON.parse(response)
