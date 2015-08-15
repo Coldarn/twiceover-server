@@ -48,8 +48,10 @@ var proto = {
 		var me = this;
 		
 		me.promise.then(function () {
+			// SQLite doesn't store doubles with as much precision as JavaScript, so convert them to strings
+			// to prevent data loss
 			me.db.run('INSERT INTO log (id, type, user, data) VALUES (?,?,?,?)',
-				event.id, event.type, event.user, JSON.stringify(event.data), broadcastEvent);
+				String(event.id), event.type, event.user, JSON.stringify(event.data), broadcastEvent);
 		});
 		
 		function broadcastEvent(err) {
@@ -80,7 +82,7 @@ function Review(index) {
 	obj.clients = new Set();
 	obj.db = new sqlite3.Database(reviewFilePath);
 	obj.promise = new Promise(function (resolve, reject) {
-		obj.db.run('CREATE TABLE log (id REAL, type TEXT, user TEXT COLLATE NOCASE, data TEXT,'
+		obj.db.run('CREATE TABLE log (id TEXT, type TEXT, user TEXT COLLATE NOCASE, data TEXT,'
 				+ ' UNIQUE(id, user) ON CONFLICT ABORT)', createDone);
 				
 		function createDone(err) {
@@ -91,6 +93,7 @@ function Review(index) {
 			console.log('review', index, 'loaded with', rows.length, 'events');
 			
 			obj.eventLog = rows.map(function (row) {
+				row.id = Number(row.id);		// Convert IDs back to Numbers
 				row.data = JSON.parse(row.data);
 				return row;
 			});
