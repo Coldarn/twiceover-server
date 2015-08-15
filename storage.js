@@ -24,7 +24,8 @@ module.exports = {
 			db.get('SELECT rowid FROM reviews WHERE id = ?', reviewID, getIndexDone);
 			
 			function getIndexDone(err, row) {
-				if (err) reject(err);
+				if (err) return reject(err);
+				if (!row) return reject('Unknown review: ' + reviewID);
 				resolve(row.rowid);
 			}
 		});
