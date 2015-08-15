@@ -1,3 +1,5 @@
+'use strict';
+
 var fs = require('fs');
 var express = require('express');
 var path = require('path');
@@ -26,7 +28,7 @@ app.get('/api/review/:id.json', function (req, res) {
 			res.sendStatus(404);
 		} else {
 			res.sendFile(fileName);
-		}		
+		}
 	})
 });
 
@@ -35,23 +37,40 @@ server.listen(PORT);
 
 
 
+var Review = require('./review.js');
+var Storage = require('./storage.js');
 
 var wss = new WebSocketServer({ server: server });
 wss.on('connection', function connection(ws) {
 	console.log('client connected');
 	
 	ws.on('message', function incoming(message) {
-        event = JSON.parse(message);
+        var event = JSON.parse(message);
 		
-		if (event.type === 'time-sync') {
-			event.serverReceive = highResTime();
-			event.serverSend = highResTime();
-			
-			ws.send(JSON.stringify(event));
+		switch(event.protocol) {
+			case 'syncReview':
+				Storage.getReviewIndex(event.reviewID, event.title, event.description, event.owner)
+					.then(function (index) {
+						console.log('loading review:', event.reviewID, index);
+						var review = Review(index);
+						if (ws.review) {
+							ws.review.removeClient(ws);
+						}
+						ws.review = review;
+						review.addClient(ws, event.log);
+					});
+				break;
+			default:
+				ws.review.addEvent(ws, event);
+				break;
 		}
 	});
 	ws.on('close', function closing(code, message) {
 		console.log('client disconnect:', code, message);
+		if (ws.review) {
+			ws.review.removeClient(ws);
+			delete ws.review;
+		}
 	});
 });
 

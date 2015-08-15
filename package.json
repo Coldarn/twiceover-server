@@ -3,9 +3,6 @@
   "version": "0.1.0",
   "description": "Server backend for sharing code reviews made in twiceover-client",
   "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Coldarn/twiceover-server.git"
@@ -18,6 +15,7 @@
   "homepage": "https://github.com/Coldarn/twiceover-server#readme",
   "dependencies": {
     "express": "^4.13.3",
+    "sqlite3": "^3.0.10",
     "ws": "^0.7.2"
   }
 }
