@@ -17,12 +17,14 @@ app.get('/', function (req, res) {
 });
 
 app.get('/api/reviews', function (req, res) {
-	fs.readdir(path.join(__dirname, 'reviews'), function (err, files) {
-		res.json(files);
+	Storage.getRecentReviews().then(function (reviews) {
+		res.json(reviews);
+	}, function (err) {
+		res.status(500).end();
 	});
 });
-app.get('/api/review/:id.json', function (req, res) {
-	var fileName = path.join(__dirname, 'reviews', req.params.id + '.json');
+app.get('/api/review/:id', function (req, res) {
+	var fileName = path.join(__dirname, 'reviews', req.params.id + '.db');
 	fs.stat(fileName, function (err, stats) {
 		if (err || !stats || !stats.isFile()) {
 			res.sendStatus(404);
@@ -51,7 +53,7 @@ wss.on('connection', function connection(ws) {
 			case 'syncReview':
 				Storage.getReviewIndex(event.reviewID, event.title, event.description, event.owner)
 					.then(function (index) {
-						console.log('loading review:', event.reviewID, index);
+						console.log('synchronizing review:', index, event.reviewID);
 						var review = Review(index);
 						if (ws.review) {
 							ws.review.removeClient(ws);

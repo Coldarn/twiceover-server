@@ -88,7 +88,7 @@ function Review(index) {
 			obj.db.all('SELECT id, type, user, data FROM log ORDER BY rowid ASC', loadDone);
 		}
 		function loadDone(err, rows) {
-			console.log('review', index, 'loaded events', rows.length);
+			console.log('review', index, 'loaded with', rows.length, 'events');
 			
 			obj.eventLog = rows.map(function (row) {
 				row.data = JSON.parse(row.data);
