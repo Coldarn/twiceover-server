@@ -5,7 +5,8 @@ var sqlite3 = require('sqlite3');
 var loadedReviews = {};
 
 var proto = {
-	db: null,
+	reviewIndex: null,	// 1-based index of this review
+	db: null,			// Connection to the review database
 	promise: null,		// Promise resolved once the review has been fully loaded
 	eventLog: null,		// Array of event objects
 	clients: null,		// Set of web socket clients
@@ -22,6 +23,15 @@ var proto = {
 		var me = this;
 		this.promise.then(function () {
 			me.clients.delete(client);
+			me.promise.then(function () {
+				if (me.clients.size === 0) {
+					me.db.close();
+					delete me.db;
+					delete me.promise;
+					delete loadedReviews[me.reviewIndex];
+					console.log('review', me.reviewIndex, 'closed');					
+				}
+			});
 		});
 	},
 	
