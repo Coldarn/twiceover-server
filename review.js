@@ -55,6 +55,7 @@ var proto = {
 		function broadcastEvent(err) {
 			if (err) return;	// The record is already saved
 			
+			me.eventLog.push(event);
 			console.log('event:', event.id, event.type, event.user);
 			
 			var message = JSON.stringify(event);
