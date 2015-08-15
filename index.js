@@ -20,7 +20,7 @@ app.get('/api/reviews', function (req, res) {
 	Storage.getRecentReviews().then(function (reviews) {
 		res.json(reviews);
 	}, function (err) {
-		res.status(500).end();
+		res.sendStatus(500);
 	});
 });
 app.get('/api/review/:id', function (req, res) {
@@ -29,7 +29,7 @@ app.get('/api/review/:id', function (req, res) {
 		if (err || !stats || !stats.isFile()) {
 			res.sendStatus(404);
 		} else {
-			res.sendFile(fileName);
+			res.end('Review download not yet implemented!');
 		}
 	})
 });
