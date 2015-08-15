@@ -51,7 +51,7 @@ wss.on('connection', function connection(ws) {
 		
 		switch(event.protocol) {
 			case 'syncReview':
-				Storage.getReviewIndex(event.reviewID, event.title, event.description, event.owner)
+				Storage.getOrCreateReview(event.reviewID, event.title, event.description, event.owner)
 					.then(function (index) {
 						console.log('synchronizing review:', index, event.reviewID);
 						var review = Review(index);
@@ -61,6 +61,19 @@ wss.on('connection', function connection(ws) {
 						ws.review = review;
 						review.addClient(ws, event.log);
 					});
+				break;
+			case 'loadReview':
+				Storage.getReviewIndex(event.reviewID).then(function (index) {
+					console.log('loading review:', index, event.reviewID);
+					var review = Review(index);
+					if (ws.review) {
+						ws.review.removeClient(ws);
+					}
+					ws.review = review;
+					review.addClient(ws, []);
+				}, function (err) {
+					ws.send(JSON.stringify({ error: 'No review found with ID "' + event.reviewID + '"' }));
+				});
 				break;
 			default:
 				ws.review.addEvent(ws, event);

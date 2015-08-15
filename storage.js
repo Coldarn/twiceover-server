@@ -19,19 +19,27 @@ module.exports = {
 		});
 	},
 	
-	getReviewIndex: function (reviewID, title, description, owner) {
+	getReviewIndex: function (reviewID) {
+		return new Promise(function (resolve, reject) {
+			db.get('SELECT rowid FROM reviews WHERE id = ?', reviewID, getIndexDone);
+			
+			function getIndexDone(err, row) {
+				if (err) reject(err);
+				resolve(row.rowid);
+			}
+		});
+	},
+	
+	getOrCreateReview: function (reviewID, title, description, owner) {
+		var me = this;
+		
 		return new Promise(function (resolve, reject) {
 			db.run('INSERT OR IGNORE INTO reviews (id, title, description, owner) VALUES (?, ?, ?, ?)',
 				reviewID, title, description, owner, insertDone);
 				
 			function insertDone(err) {
 				if (err) reject(err);
-				db.get('SELECT rowid FROM reviews WHERE id = ?', reviewID, getIndexDone);
-			}
-			
-			function getIndexDone(err, row) {
-				if (err) reject(err);
-				resolve(row.rowid);
+				resolve(me.getReviewIndex(reviewID));
 			}
 		});
 	}
