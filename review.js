@@ -49,20 +49,29 @@ var proto = {
 		console.log('sending', newToClient.length, 'event(s) to the client');
 		client.send(JSON.stringify(newToClient));
 		
-		events.forEach(function (event) {
-			me.addEvent(client, event);
+		me.db.serialize(function () {
+			me.db.run('BEGIN TRANSACTION');
+			events.forEach(function (event) {
+				me._addEvent(client, event);
+			});
+			me.db.run('COMMIT');
 		});
 	},
 	
 	addEvent: function (fromClient, event) {
 		var me = this;
-		
 		me.promise.then(function () {
-			// SQLite doesn't store doubles with as much precision as JavaScript, so convert them to strings
-			// to prevent data loss
-			me.db.run('INSERT INTO log (id, type, user, data) VALUES (?,?,?,?)',
-				String(event.id), event.type, event.user, JSON.stringify(event.data), broadcastEvent);
+			me._addEvent(fromClient, event);
 		});
+	},
+	
+	_addEvent: function (fromClient, event) {
+		var me = this;
+		
+		// SQLite doesn't store doubles with as much precision as JavaScript, so convert them to strings
+		// to prevent data loss
+		me.db.run('INSERT INTO log (id, type, user, data) VALUES (?,?,?,?)',
+			String(event.id), event.type, event.user, JSON.stringify(event.data), broadcastEvent);
 		
 		function broadcastEvent(err) {
 			if (err) return;	// The record is already saved
