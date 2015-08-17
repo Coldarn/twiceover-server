@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Server backend for sharing code reviews made in twiceover-client",
   "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Coldarn/twiceover-server.git"

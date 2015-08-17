@@ -90,6 +90,7 @@ wss.on('connection', function connection(ws) {
 });
 
 
+console.log('server listeneing on port', PORT);
 
 
 // Converts the [seconds, nanoseconds] structs into ms doubles
