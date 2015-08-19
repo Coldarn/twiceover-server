@@ -6,7 +6,11 @@ var path = require('path');
 var WebSocketServer = require('ws').Server;
 var http = require('http');
 	
+var Reviews = require('./reviews.js');
+var Review = require('./review.js');
+
 var PORT = 3000;
+
 
 
 var app = express();
@@ -17,7 +21,7 @@ app.get('/', function (req, res) {
 });
 
 app.get('/api/reviews', function (req, res) {
-	Storage.getRecentReviews().then(function (reviews) {
+	Reviews.getRecentReviews().then(function (reviews) {
 		res.json(reviews);
 	}, function (err) {
 		res.sendStatus(500);
@@ -39,9 +43,6 @@ server.listen(PORT);
 
 
 
-var Review = require('./review.js');
-var Storage = require('./storage.js');
-
 var wss = new WebSocketServer({ server: server });
 wss.on('connection', function connection(ws) {
 	console.log('client connected');
@@ -51,7 +52,7 @@ wss.on('connection', function connection(ws) {
 		
 		switch(event.protocol) {
 			case 'syncReview':
-				Storage.getOrCreateReview(event.reviewID, event.title, event.description, event.owner)
+				Reviews.getOrCreateReview(event.reviewID)
 					.then(function (index) {
 						console.log('synchronizing review:', index, event.reviewID);
 						var review = Review(index);
@@ -63,7 +64,7 @@ wss.on('connection', function connection(ws) {
 					});
 				break;
 			case 'loadReview':
-				Storage.getReviewIndex(event.reviewID).then(function (index) {
+				Reviews.getReviewIndex(event.reviewID).then(function (index) {
 					console.log('loading review:', index, event.reviewID);
 					var review = Review(index);
 					if (ws.review) {

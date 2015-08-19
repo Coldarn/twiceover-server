@@ -1,6 +1,7 @@
 'use strict';
 
 var sqlite3 = require('sqlite3');
+var Reviews = require('./reviews.js');
 
 var loadedReviews = {};
 
@@ -78,6 +79,16 @@ var proto = {
 			
 			me.eventLog.push(event);
 			console.log('event:', event.id, event.type, event.user);
+			
+			if (event.type === 'newReview') {
+				Reviews.updateMetadata(me.reviewIndex, {
+					owner: event.user,
+					title: event.data.title,
+					description: event.data.description,
+					whenCreated: Math.floor(event.id)
+				});
+				Reviews.addReviewers(me.reviewIndex, event.data.reviewers);
+			}
 			
 			var message = JSON.stringify(event);
 			for (var ws of me.clients) {
