@@ -60,6 +60,26 @@ module.exports = {
 		});
 	},
 	
+	getReview: function (reviewIndex) {
+		return new Promise(function (resolve, reject) {
+			var review;
+			
+			db.get('SELECT ix, id, title, description, owner, created, status FROM reviews'
+				+ ' WHERE ix = ?', reviewIndex, getDataDone);
+				
+			function getDataDone(err, row) {
+				if (err) reject(err);
+				review = row;
+				db.all('SELECT email FROM reviewers WHERE reviewIndex = ?', reviewIndex, getReviewersDone);
+			}
+			function getReviewersDone(err, rows) {
+				if (err) reject(err);
+				review.reviewers = rows.map(function (r) { return r.email; });
+				resolve(review);				
+			}
+		});
+	},
+	
 	updateMetadata: function (reviewIdOrIndex, metadata) {
 		var sql = [],
 			params = [];
@@ -86,6 +106,19 @@ module.exports = {
 			});
 			statement.finalize();
 			db.run('COMMIT');
+		});
+	},
+	
+	getReviewsByReviewer: function (email) {
+		return new Promise(function (resolve, reject) {
+			db.all('SELECT ix, title, owner, created, status FROM reviews'
+				+ ' WHERE owner LIKE ?'
+				+ ' OR ix IN (SELECT ix FROM reviewers WHERE email = ?)'
+				+ ' ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email, getDataDone);
+			function getDataDone(err, rows) {
+				if (err) reject(err);
+				resolve(rows);
+			}
 		});
 	}
 };

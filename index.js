@@ -24,19 +24,24 @@ app.get('/api/reviews', function (req, res) {
 	Reviews.getRecentReviews().then(function (reviews) {
 		res.json(reviews);
 	}, function (err) {
-		res.sendStatus(500);
+		res.sendStatus(400);
 	});
 });
-app.get('/api/review/:id', function (req, res) {
-	var fileName = path.join(__dirname, 'reviews', req.params.id + '.db');
-	fs.stat(fileName, function (err, stats) {
-		if (err || !stats || !stats.isFile()) {
-			res.sendStatus(404);
-		} else {
-			res.end('Review download not yet implemented!');
-		}
-	})
+app.get('/api/review/:ix', function (req, res) {
+	Reviews.getReview(Number(req.params.ix)).then(function (review) {
+		res.json(review);
+	}, function (err) {
+		res.sendStatus(400);
+	});
 });
+app.get('/api/user/:email', function (req, res) {
+	Reviews.getReviewsByReviewer(req.params.email).then(function (reviews) {
+		res.json(reviews);
+	}, function (err) {
+		res.sendStatus(400);
+	});
+});
+
 
 var server = http.createServer(app);
 server.listen(PORT);
