@@ -22,7 +22,7 @@ db.run('CREATE TABLE reviewers (reviewIndex INT NOT NULL, email TEXT NOT NULL CO
 module.exports = {
 	getRecentReviews: function () {
 		return new Promise(function (resolve, reject) {
-			db.all('SELECT ix, title, description, owner FROM reviews ORDER BY ix DESC LIMIT 1000', getDataDone);
+			db.all('SELECT ix, title, owner, created, status FROM reviews ORDER BY created DESC LIMIT 1000', getDataDone);
 			function getDataDone(err, rows) {
 				if (err) reject(err);
 				resolve(rows);
