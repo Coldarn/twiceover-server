@@ -1,5 +1,6 @@
 define([], function () {
-	
+	'use strict';
+
 	function Request(method, url) {
 		var req = new XMLHttpRequest();
 		req.open(method, url, true);
