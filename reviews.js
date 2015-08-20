@@ -32,12 +32,8 @@ module.exports = {
 	
 	getReviewIndex: function (reviewIdOrIndex) {
 		return new Promise(function (resolve, reject) {
-			var index = reviewIdOrIndex.length < 22 && Number(reviewIdOrIndex);
-			if (index) {
-				db.get('SELECT ix FROM reviews WHERE ix = ?', index, getIndexDone);
-			} else {
-				db.get('SELECT ix FROM reviews WHERE id = ?', reviewIdOrIndex, getIndexDone);
-			}
+				db.get('SELECT ix FROM reviews WHERE ix = ? OR id = ?',
+					reviewIdOrIndex, reviewIdOrIndex, getIndexDone);
 			
 			function getIndexDone(err, row) {
 				if (err) return reject(err);
