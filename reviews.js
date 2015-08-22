@@ -81,11 +81,10 @@ module.exports = {
 		var sql = [],
 			params = [];
 		Object.keys(metadata).forEach(function (key) {
-			if (!(key in updateColumns)) {
-				throw new Error('Unknown metadata key: ' + key);
+			if (updateColumns[key]) {
+				sql.push(updateColumns[key] + ' = ?');
+				params.push(metadata[key]);
 			}
-			sql.push(updateColumns[key] + ' = ?');
-			params.push(metadata[key]);
 		});
 		if (sql.length === 0) {
 			throw new Error('No metadata given to update!');
