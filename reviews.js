@@ -56,20 +56,21 @@ module.exports = {
 		});
 	},
 	
-	getReview: function (reviewIndex) {
+	getReview: function (reviewIdOrIndex) {
 		return new Promise(function (resolve, reject) {
 			var review;
 			
 			db.get('SELECT ix, id, title, description, owner, created, status FROM reviews'
-				+ ' WHERE ix = ?', reviewIndex, getDataDone);
+				+ ' WHERE ix = ? OR id = ?', Number(reviewIdOrIndex), reviewIdOrIndex, getDataDone);
 				
 			function getDataDone(err, row) {
-				if (err) reject(err);
+				if (err) return reject(err);
+				if (!row) return reject('No review found: ' + reviewIdOrIndex);
 				review = row;
-				db.all('SELECT email FROM reviewers WHERE reviewIndex = ?', reviewIndex, getReviewersDone);
+				db.all('SELECT email FROM reviewers WHERE reviewIndex = ?', row.ix, getReviewersDone);
 			}
 			function getReviewersDone(err, rows) {
-				if (err) reject(err);
+				if (err) return reject(err);
 				review.reviewers = rows.map(function (r) { return r.email; });
 				resolve(review);				
 			}

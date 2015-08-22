@@ -9,7 +9,7 @@ var http = require('http');
 var Reviews = require('./reviews.js');
 var Review = require('./review.js');
 
-var PORT = 3000;
+var HOST_INFO = require('./host.json');
 
 
 
@@ -27,8 +27,8 @@ app.get('/api/reviews', function (req, res) {
 		res.sendStatus(400);
 	});
 });
-app.get('/api/review/:ix', function (req, res) {
-	Reviews.getReview(Number(req.params.ix)).then(function (review) {
+app.get('/api/review/:idOrIx', function (req, res) {
+	Reviews.getReview(req.params.idOrIx).then(function (review) {
 		res.json(review);
 	}, function (err) {
 		res.sendStatus(400);
@@ -44,7 +44,7 @@ app.get('/api/user/:email', function (req, res) {
 
 
 var server = http.createServer(app);
-server.listen(PORT);
+server.listen(HOST_INFO.port);
 
 
 
@@ -96,7 +96,7 @@ wss.on('connection', function connection(ws) {
 });
 
 
-console.log('server listeneing on port', PORT);
+console.log('server listeneing on port', HOST_INFO.port);
 
 
 // Converts the [seconds, nanoseconds] structs into ms doubles
