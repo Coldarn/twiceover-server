@@ -34,8 +34,15 @@ app.get('/api/review/:idOrIx', function (req, res) {
 		res.sendStatus(400);
 	});
 });
-app.get('/api/user/:email', function (req, res) {
-	Reviews.getReviewsByReviewer(req.params.email).then(function (reviews) {
+app.get('/api/reviewsIncluding/:email', function (req, res) {
+	Reviews.getReviewsIncludingReviewer(req.params.email).then(function (reviews) {
+		res.json(reviews);
+	}, function (err) {
+		res.sendStatus(400);
+	});
+});
+app.get('/api/reviewsExcluding/:email', function (req, res) {
+	Reviews.getReviewsExcludingReviewer(req.params.email, true).then(function (reviews) {
 		res.json(reviews);
 	}, function (err) {
 		res.sendStatus(400);

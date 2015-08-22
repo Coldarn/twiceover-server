@@ -105,11 +105,24 @@ module.exports = {
 		});
 	},
 	
-	getReviewsByReviewer: function (email) {
+	getReviewsIncludingReviewer: function (email) {
 		return new Promise(function (resolve, reject) {
 			db.all('SELECT ix, title, owner, created, status FROM reviews'
 				+ ' WHERE owner LIKE ?'
-				+ ' OR ix IN (SELECT ix FROM reviewers WHERE email = ?)'
+				+ ' OR ix IN (SELECT reviewIndex FROM reviewers WHERE email = ?)'
+				+ ' ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email, getDataDone);
+			function getDataDone(err, rows) {
+				if (err) reject(err);
+				resolve(rows);
+			}
+		});
+	},
+	
+	getReviewsExcludingReviewer: function (email) {
+		return new Promise(function (resolve, reject) {
+			db.all('SELECT ix, title, owner, created, status FROM reviews'
+				+ ' WHERE owner NOT LIKE ?'
+				+ ' AND ix NOT IN (SELECT reviewIndex FROM reviewers WHERE email = ?)'
 				+ ' ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email, getDataDone);
 			function getDataDone(err, rows) {
 				if (err) reject(err);
