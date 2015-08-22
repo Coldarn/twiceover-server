@@ -78,6 +78,10 @@ a {
     color: inherit;
 }
 
+a:hover {
+    color: white;
+}
+
 label {
     font-size: 18px;
     line-height: 30px;
