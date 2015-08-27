@@ -15,10 +15,15 @@ var HOST_INFO = require('./host.json');
 var Reviews = require('./reviews.js');
 
 
+function buildReviewLink(reviewIndex) {
+	return ['twiceover://', HOST_INFO.name, ':', HOST_INFO.port,
+		'/api/review/', reviewIndex].join('');
+}
+
+
 module.exports = {
 	newReview: function (review) {
-		var reviewLink = ['twiceover://', HOST_INFO.name, ':', HOST_INFO.port,
-			'/api/review/', review.ix].join('');
+		var reviewLink = buildReviewLink(review.ix);
 		
 		sender.sendMail({
 			from: '"Twice-Over" <no-reply@' + HOST_INFO.name + '>',
@@ -32,5 +37,27 @@ module.exports = {
 			if (err) return console.error(err);
 			console.log(info.response);
 		});
+	},
+	
+	reviewerJoined: function (reviewIndex, newReviewer) {
+		var reviewerName = newReviewer.substring(0, newReviewer.indexOf('<')).trim() || newReviewer;
+		var reviewLink = buildReviewLink(reviewIndex);
+		
+		Reviews.getReview(reviewIndex).then(function (review) {
+			sender.sendMail({
+				from: '"Twice-Over" <no-reply@' + HOST_INFO.name + '>',
+				replyTo: review.owner,
+				to: [review.owner, newReviewer].concat(review.reviewers),
+				subject: 'Review ' + reviewIndex + ': ' + reviewerName + ' Joined!',
+				text: reviewLink + '\n\n' + review.description,
+				html: ['<a href="', reviewLink, '">Code Review ', review.ix, ': ', review.title,
+					'</a><br/><br/>', reviewerName, ' has started reviewing!'].join('') 
+			}, function (err, info) {
+				if (err) return console.error(err);
+				console.log(info.response);
+			});
+		}, function (err) {
+			console.error(err);
+		})
 	}
 };

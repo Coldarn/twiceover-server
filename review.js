@@ -94,6 +94,9 @@ var proto = {
 				Reviews.updateMetadata(me.reviewIndex, review);
 				Reviews.addReviewers(me.reviewIndex, event.data.reviewers);
 				Notification.newReview(review);
+			} else if (event.type === 'reviewerJoined') {
+				Reviews.addReviewers(me.reviewIndex, [event.data.reviewer]);
+				Notification.reviewerJoined(me.reviewIndex, event.data.reviewer);
 			}
 			
 			var message = JSON.stringify(event);
