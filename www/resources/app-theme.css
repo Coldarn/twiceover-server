@@ -53,6 +53,13 @@ body {
     z-index: 10;
     text-shadow: 0 0 2px #333;
 }
+.menu-bar > a {
+    font-size: 16px;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    margin: 0 12px;
+    font-style: normal;
+    vertical-align: 4px;
+}
 
 .container-inner {
     padding: 10px;
