@@ -25,6 +25,10 @@ module.exports = {
 	newReview: function (review) {
 		var reviewLink = buildReviewLink(review.ix);
 		
+		if (!sender) {
+			return;
+		}
+		
 		sender.sendMail({
 			from: '"Twice-Over" <no-reply@' + HOST_INFO.name + '>',
 			replyTo: review.owner,
@@ -42,6 +46,10 @@ module.exports = {
 	reviewerJoined: function (reviewIndex, newReviewer) {
 		var reviewerName = newReviewer.substring(0, newReviewer.indexOf('<')).trim() || newReviewer;
 		var reviewLink = buildReviewLink(reviewIndex);
+		
+		if (!sender) {
+			return;
+		}
 		
 		Reviews.getReview(reviewIndex).then(function (review) {
 			sender.sendMail({
