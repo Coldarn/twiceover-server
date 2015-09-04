@@ -1,0 +1,32 @@
+<div style="font-family: Segoe UI, Tahoma, sans-serif; font-size: 16px">
+    <div style="font-size: 20px; font-weight: bold; background: #484; padding: 1px 5px 4px 7px">
+        <a href="{{reviewLink}}" style="color: white; border: none;">
+            Code Review {{ix}}: {{title}}
+        </a>
+    </div>
+
+    <div style="margin-bottom: 16px;">
+        <a href="{{downloadLink}}" style="font-size:12px; color: #444;">Click here to install Twice-Over to open this review</a>
+    </div>
+
+    <table style="border-spacing: 5px; border-collapse: collapse; border: 0; width: 100%; margin-bottom: 16px;">
+        <tr style="border-bottom: 10px solid transparent;">
+            <td style="width: 100px"><b>Owner:</b></td>
+            <td>{{owner}}</td>
+            <td>{{status}}</td>
+            <td>{{statusLabel}}</td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top" rowspan="{{ reviewers.length || 1 }}"><b>Reviewers:</b></td>
+        {{#reviewers}}
+            <td>{{name}}</td>
+            <td>{{status}}</td>
+            <td>{{statusLabel}}</td>
+        </tr>
+        <tr>
+        {{/reviewers}}
+        </tr>
+    </table>
+    
+    <p>{{description}}</p>
+</div>

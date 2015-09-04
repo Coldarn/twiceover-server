@@ -11,18 +11,26 @@ var updateColumns = {
 	description: 'description',
 	owner: 'owner',
 	whenCreated: 'created',
-	status: 'status'	
+	status: 'status',
+	statusLabel: 'statusLabel',
+	whenUpdated: 'updated'
 };
 
-// Don't care if any of these fail, that just means the tables already exists
-db.run("CREATE TABLE reviews (ix INTEGER PRIMARY KEY, id TEXT UNIQUE, title TEXT, description TEXT, owner TEXT,"
-	+ "created INT, status TEXT NOT NULL DEFAULT 'active')", function (err) { });
-db.run('CREATE TABLE reviewers (reviewIndex INT NOT NULL, email TEXT NOT NULL COLLATE NOCASE, PRIMARY KEY (reviewIndex, email))', function (err) { });
+// Don't care if any of these fail, that just means they've already been run
+db.run("CREATE TABLE reviews (ix INTEGER PRIMARY KEY, id TEXT UNIQUE, title TEXT, description TEXT, owner TEXT, "
+	+ "created INT, status TEXT NOT NULL)", function (err) { });
+db.run('ALTER TABLE reviews ADD COLUMN statusLabel TEXT', function (err) { });
+db.run('ALTER TABLE reviews ADD COLUMN updated INT', function (err) { });
+	
+db.run("CREATE TABLE reviewers (reviewIndex INT NOT NULL, email TEXT NOT NULL COLLATE NOCASE, PRIMARY KEY "
+	+ "(reviewIndex, email))", function (err) { });
+db.run('ALTER TABLE reviewers ADD COLUMN status TEXT', function (err) { });
+db.run('ALTER TABLE reviewers ADD COLUMN statusLabel TEXT', function (err) { });
 	
 module.exports = {
 	getRecentReviews: function () {
 		return new Promise(function (resolve, reject) {
-			db.all('SELECT ix, title, owner, created, status FROM reviews ORDER BY created DESC LIMIT 1000', getDataDone);
+			db.all('SELECT ix, title, owner, created AS whenCreated, status FROM reviews ORDER BY created DESC LIMIT 1000', getDataDone);
 			function getDataDone(err, rows) {
 				if (err) reject(err);
 				resolve(rows);
@@ -60,54 +68,64 @@ module.exports = {
 		return new Promise(function (resolve, reject) {
 			var review;
 			
-			db.get('SELECT ix, id, title, description, owner, created, status FROM reviews'
+			db.get('SELECT ix, id, title, description, owner, created AS whenCreated, status, statusLabel, updated AS whenUpdated FROM reviews'
 				+ ' WHERE ix = ? OR id = ?', Number(reviewIdOrIndex), reviewIdOrIndex, getDataDone);
 				
 			function getDataDone(err, row) {
 				if (err) return reject(err);
 				if (!row) return reject('No review found: ' + reviewIdOrIndex);
 				review = row;
-				db.all('SELECT email FROM reviewers WHERE reviewIndex = ?', row.ix, getReviewersDone);
+				db.all('SELECT email as name, status, statusLabel FROM reviewers WHERE reviewIndex = ?', row.ix, getReviewersDone);
 			}
 			function getReviewersDone(err, rows) {
 				if (err) return reject(err);
-				review.reviewers = rows.map(function (r) { return r.email; });
+				review.reviewers = rows;
 				resolve(review);				
 			}
 		});
 	},
 	
 	updateMetadata: function (reviewIdOrIndex, metadata) {
-		var sql = [],
-			params = [];
-		Object.keys(metadata).forEach(function (key) {
-			if (updateColumns[key]) {
-				sql.push(updateColumns[key] + ' = ?');
-				params.push(metadata[key]);
+		return new Promise(function (resolve, reject) {
+			var sql = [],
+				params = [];
+			Object.keys(metadata).forEach(function (key) {
+				if (updateColumns[key]) {
+					sql.push(updateColumns[key] + ' = ?');
+					params.push(metadata[key]);
+				}
+			});
+			if (sql.length === 0) {
+				throw new Error('No metadata given to update!');
 			}
+			params.push(reviewIdOrIndex, reviewIdOrIndex);
+			db.run('UPDATE reviews SET ' + sql.join(',') + ' WHERE ix = ? OR id = ?', params, function (err) {
+				if (err) return reject(err);
+				resolve();
+			});
 		});
-		if (sql.length === 0) {
-			throw new Error('No metadata given to update!');
-		}
-		params.push(reviewIdOrIndex, reviewIdOrIndex);
-		db.run('UPDATE reviews SET ' + sql.join(',') + ' WHERE ix = ? OR id = ?', params);
 	},
 	
 	addReviewers: function (reviewIndex, reviewerEmails) {
-		db.serialize(function () {
-			db.run('BEGIN TRANSACTION');
-			var statement = db.prepare('INSERT OR IGNORE INTO reviewers (reviewIndex, email) VALUES (?, ?)');
-			reviewerEmails.forEach(function (email) {
-				statement.run(reviewIndex, email.trim());
+		return new Promise(function (resolve, reject) {
+			db.serialize(function () {
+				db.run('BEGIN TRANSACTION');
+				var statement = db.prepare('INSERT OR IGNORE INTO reviewers (reviewIndex, email) VALUES (?, ?)');
+				reviewerEmails.forEach(function (email) {
+					statement.run(reviewIndex, email.trim());
+				});
+				statement.finalize();
+				db.run('COMMIT', function (err) {
+					if (err) return reject(err);
+					resolve();
+				});
 			});
-			statement.finalize();
-			db.run('COMMIT');
 		});
 	},
 	
 	getReviewsIncludingReviewer: function (email) {
 		return new Promise(function (resolve, reject) {
-			db.all('SELECT ix, title, owner, created, status FROM reviews'
+			db.all('SELECT ix, title, owner, created AS whenCreated, status, statusLabel FROM reviews'
 				+ ' WHERE owner LIKE ?'
 				+ ' OR ix IN (SELECT reviewIndex FROM reviewers WHERE email = ?)'
 				+ ' ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email, getDataDone);
@@ -120,7 +138,7 @@ module.exports = {
 	
 	getReviewsExcludingReviewer: function (email) {
 		return new Promise(function (resolve, reject) {
-			db.all('SELECT ix, title, owner, created, status FROM reviews'
+			db.all('SELECT ix, title, owner, created AS whenCreated, status, statusLabel FROM reviews'
 				+ ' WHERE owner NOT LIKE ?'
 				+ ' AND ix NOT IN (SELECT reviewIndex FROM reviewers WHERE email = ?)'
 				+ ' ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email, getDataDone);

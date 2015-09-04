@@ -2,6 +2,7 @@ var fs = require('fs');
 var os = require('os');
 var nodemailer = require('nodemailer');
 var smtpTransport = require('nodemailer-smtp-transport');
+var cons = require('consolidate');
 
 if (!fs.existsSync('mailserver.json')) {
 	console.warn('File "mailserver.json" not found, disabling email notification.')
@@ -14,58 +15,76 @@ if (!fs.existsSync('mailserver.json')) {
 var HOST_INFO = require('./host.json');
 var Reviews = require('./reviews.js');
 
+var FROM_ADDR = '"Twice-Over" <no-reply@' + HOST_INFO.name + '>';
+var PORT_STR = HOST_INFO.port && HOST_INFO.port != 80 ? ':' + HOST_INFO.port : '';
+var CLIENT_DOWNLOAD_LINK = ['http://', HOST_INFO.name, PORT_STR, '/Twice-OverSetup.exe'].join('');
 
 function buildReviewLink(reviewIndex) {
-	return ['twiceover://', HOST_INFO.name, ':', HOST_INFO.port,
-		'/api/review/', reviewIndex].join('');
+	return ['twiceover://', HOST_INFO.name, PORT_STR, '/api/review/', reviewIndex].join('');
 }
-
+function getName(email) {
+	return email.substring(0, email.indexOf('<')).trim() || email;
+}
 
 module.exports = {
 	newReview: function (review) {
-		var reviewLink = buildReviewLink(review.ix);
-		
+		console.log('notification: newReview', review.ix);
 		if (!sender) {
 			return;
 		}
-		
+		sendMail('New Review ' + review.ix + ': ' + review.title, review);
+	},
+	
+	reviewerJoined: function (reviewIndex, newReviewer) {
+		console.log('notification: reviewerJoined', reviewIndex);
+		if (!sender) {
+			return;
+		}
+		getReviewAndSend('Review ' + reviewIndex + ': ' + getName(newReviewer) + ' Joined!', reviewIndex);
+	},
+	
+	changeReviewStatus: function (reviewIndex, status, statusLabel) {
+		console.log('notification: changeReviewStatus', reviewIndex);
+		if (!sender) {
+			return;
+		}
+		getReviewAndSend('Review ' + reviewIndex + ': ' + statusLabel, reviewIndex);
+	},
+	
+	changeReviewerStatus: function (reviewIndex, email, status, statusLabel) {
+		console.log('notification: changeReviewerStatus', reviewIndex);
+		if (!sender) {
+			return;
+		}
+		getReviewAndSend('Review ' + reviewIndex + ': ' + getName(email)
+			+ ' changed status to ' + statusLabel, reviewIndex);
+	}
+};
+
+function getReviewAndSend(mailTitle, reviewIndex) {
+	Reviews.getReview(reviewIndex).then(function (review) {
+		review.downloadLink = CLIENT_DOWNLOAD_LINK;
+		review.reviewLink = buildReviewLink(review.ix);
+		sendMail(mailTitle, review);
+	}, function (err) {
+		console.error(err);
+	})
+}
+
+function sendMail(mailTitle, review) {
+	review.downloadLink = CLIENT_DOWNLOAD_LINK;
+	review.reviewLink = buildReviewLink(review.ix);
+	cons.mustache('email/ReviewStatus.html', review).then(function (template) {
 		sender.sendMail({
-			from: '"Twice-Over" <no-reply@' + HOST_INFO.name + '>',
+			from: FROM_ADDR,
 			replyTo: review.owner,
 			to: [review.owner].concat(review.reviewers),
 			subject: 'New Review: ' + review.title,
-			text: reviewLink + '\n\n' + review.description,
-			html: ['<a href="', reviewLink, '">Code Review ', review.ix, ': ', review.title,
-				'</a><br/><br/>', review.description].join('') 
+			text: review.reviewLink + '\n\n' + review.description,
+			html: template
 		}, function (err, info) {
 			if (err) return console.error(err);
 			console.log(info.response);
 		});
-	},
-	
-	reviewerJoined: function (reviewIndex, newReviewer) {
-		var reviewerName = newReviewer.substring(0, newReviewer.indexOf('<')).trim() || newReviewer;
-		var reviewLink = buildReviewLink(reviewIndex);
-		
-		if (!sender) {
-			return;
-		}
-		
-		Reviews.getReview(reviewIndex).then(function (review) {
-			sender.sendMail({
-				from: '"Twice-Over" <no-reply@' + HOST_INFO.name + '>',
-				replyTo: review.owner,
-				to: [review.owner, newReviewer].concat(review.reviewers),
-				subject: 'Review ' + reviewIndex + ': ' + reviewerName + ' Joined!',
-				text: reviewLink + '\n\n' + review.description,
-				html: ['<a href="', reviewLink, '">Code Review ', review.ix, ': ', review.title,
-					'</a><br/><br/>', reviewerName, ' has started reviewing!'].join('') 
-			}, function (err, info) {
-				if (err) return console.error(err);
-				console.log(info.response);
-			});
-		}, function (err) {
-			console.error(err);
-		})
-	}
-};
+	});
+}

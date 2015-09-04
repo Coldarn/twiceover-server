@@ -69,7 +69,8 @@ var proto = {
 	},
 	
 	_addEvent: function (fromClient, event) {
-		var me = this;
+		var me = this,
+			message;
 		
 		// SQLite doesn't store doubles with as much precision as JavaScript, so convert them to strings
 		// to prevent data loss
@@ -82,24 +83,51 @@ var proto = {
 			me.eventLog.push(event);
 			console.log('event:', event.id, event.type, event.user);
 			
-			if (event.type === 'newReview') {
-				var review = {
-					ix: me.reviewIndex,
-					owner: event.user,
-					title: event.data.title,
-					description: event.data.description,
-					whenCreated: Math.floor(event.id),
-					reviewers: event.data.reviewers
-				};
-				Reviews.updateMetadata(me.reviewIndex, review);
-				Reviews.addReviewers(me.reviewIndex, event.data.reviewers);
-				Notification.newReview(review);
-			} else if (event.type === 'reviewerJoined') {
-				Reviews.addReviewers(me.reviewIndex, [event.data.reviewer]);
-				Notification.reviewerJoined(me.reviewIndex, event.data.reviewer);
+			switch (event.type) {
+				case 'newReview':
+					var review = {
+						ix: me.reviewIndex,
+						owner: event.user,
+						title: event.data.title,
+						description: event.data.description,
+						whenCreated: Math.floor(event.id),
+						status: event.data.status,
+						statusLabel: event.data.statusLabel,
+						reviewers: event.data.reviewers
+					};
+					Promise.all([
+						Reviews.updateMetadata(me.reviewIndex, review),
+						Reviews.addReviewers(me.reviewIndex, event.data.reviewers)
+					]).then(function () {
+						review.reviewers = review.reviewers.map(function (email) {
+							return { name: email, status: null, statusLabel: null };
+						});
+						Notification.newReview(review);
+					});
+					break;
+				case 'reviewerJoined':
+					Reviews.addReviewers(me.reviewIndex, [event.data.reviewer]).then(function () {
+						Notification.reviewerJoined(me.reviewIndex, event.data.reviewer);
+					});
+					break;
+				case 'changeReviewStatus':
+					message = {
+						status: event.data.status,
+						statusLabel: event.data.statusLabel,
+						whenUpdated: Math.floor(event.id)
+					}
+					Reviews.updateMetadata(me.reviewIndex, message).then(function () {
+						Notification.changeReviewStatus(me.reviewIndex, event.data.status, event.data.statusLabel);
+					});
+					break;
+				case 'changeReviewerStatus':
+					Reviews.updateMetadata(me.reviewIndex, event.data).then(function () {
+						Notification.changeReviewerStatus(me.reviewIndex, event.data.email, event.data.status, event.data.statusLabel);
+					});
+					break;
 			}
 			
-			var message = JSON.stringify(event);
+			message = JSON.stringify(event);
 			for (var ws of me.clients) {
 				if (ws !== fromClient) {
 					ws.send(message);
