@@ -123,6 +123,16 @@ module.exports = {
 		});
 	},
 	
+	updateReviewerStatus: function (reviewIndex, reviewer, status, statusLabel) {
+		return new Promise(function (resolve, reject) {
+			db.run('UPDATE reviewers SET status = ?, statusLabel = ? WHERE reviewIndex = ? AND email = ?',
+				status, statusLabel, reviewIndex, reviewer, function (err) {
+					if (err) return reject(err);
+					resolve();
+				});
+		});
+	},
+	
 	getReviewsIncludingReviewer: function (email) {
 		return new Promise(function (resolve, reject) {
 			db.all('SELECT ix, title, owner, created AS whenCreated, status, statusLabel FROM reviews'

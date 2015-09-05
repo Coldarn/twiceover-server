@@ -29,33 +29,21 @@ function getName(email) {
 module.exports = {
 	newReview: function (review) {
 		console.log('notification: newReview', review.ix);
-		if (!sender) {
-			return;
-		}
 		sendMail('New Review ' + review.ix + ': ' + review.title, review);
 	},
 	
 	reviewerJoined: function (reviewIndex, newReviewer) {
 		console.log('notification: reviewerJoined', reviewIndex);
-		if (!sender) {
-			return;
-		}
 		getReviewAndSend('Review ' + reviewIndex + ': ' + getName(newReviewer) + ' Joined!', reviewIndex);
 	},
 	
 	changeReviewStatus: function (reviewIndex, status, statusLabel) {
 		console.log('notification: changeReviewStatus', reviewIndex);
-		if (!sender) {
-			return;
-		}
 		getReviewAndSend('Review ' + reviewIndex + ': ' + statusLabel, reviewIndex);
 	},
 	
 	changeReviewerStatus: function (reviewIndex, email, status, statusLabel) {
 		console.log('notification: changeReviewerStatus', reviewIndex);
-		if (!sender) {
-			return;
-		}
 		getReviewAndSend('Review ' + reviewIndex + ': ' + getName(email)
 			+ ' changed status to ' + statusLabel, reviewIndex);
 	}
@@ -75,6 +63,11 @@ function sendMail(mailTitle, review) {
 	review.downloadLink = CLIENT_DOWNLOAD_LINK;
 	review.reviewLink = buildReviewLink(review.ix);
 	cons.mustache('email/ReviewStatus.html', review).then(function (template) {
+		// console.log(template);
+		
+		if (!sender) {
+			return;
+		}
 		sender.sendMail({
 			from: FROM_ADDR,
 			replyTo: review.owner,

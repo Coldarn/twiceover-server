@@ -121,8 +121,8 @@ var proto = {
 					});
 					break;
 				case 'changeReviewerStatus':
-					Reviews.updateMetadata(me.reviewIndex, event.data).then(function () {
-						Notification.changeReviewerStatus(me.reviewIndex, event.data.email, event.data.status, event.data.statusLabel);
+					Reviews.updateReviewerStatus(me.reviewIndex, event.data.reviewer, event.data.status, event.data.label).then(function () {
+						Notification.changeReviewerStatus(me.reviewIndex, event.data.reviewer, event.data.status, event.data.label);
 					});
 					break;
 			}
