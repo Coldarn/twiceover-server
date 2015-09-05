@@ -4,6 +4,8 @@
 var path = require('path');
 var sqlite3 = require('sqlite3');
 
+var User = require('./user.js');
+
 var db = new sqlite3.Database(path.join('reviews', 'reviews.db'));
 
 var updateColumns = {
@@ -108,13 +110,27 @@ module.exports = {
 	
 	addReviewers: function (reviewIndex, reviewerEmails) {
 		return new Promise(function (resolve, reject) {
+			function checkErr(err) {
+				if (err) return reject(err);
+			}
 			db.serialize(function () {
 				db.run('BEGIN TRANSACTION');
-				var statement = db.prepare('INSERT OR IGNORE INTO reviewers (reviewIndex, email) VALUES (?, ?)');
+				
+				// Update names for any who's names have been updated
+				var updateStmt = db.prepare('UPDATE reviewers SET email = ? WHERE reviewIndex = ? AND email = ?');
 				reviewerEmails.forEach(function (email) {
-					statement.run(reviewIndex, email.trim());
+					var user = User(email);
+					updateStmt.run(user.toString(), reviewIndex, user.email, checkErr);
 				});
-				statement.finalize();
+				updateStmt.finalize();
+				
+				// Add any new users
+				var insertStmt = db.prepare('INSERT OR IGNORE INTO reviewers (reviewIndex, email) VALUES (?, ?)');
+				reviewerEmails.forEach(function (email) {
+					insertStmt.run(reviewIndex, email.trim(), checkErr);
+				});
+				insertStmt.finalize();
+				
 				db.run('COMMIT', function (err) {
 					if (err) return reject(err);
 					resolve();
@@ -125,11 +141,22 @@ module.exports = {
 	
 	updateReviewerStatus: function (reviewIndex, reviewer, status, statusLabel) {
 		return new Promise(function (resolve, reject) {
-			db.run('UPDATE reviewers SET status = ?, statusLabel = ? WHERE reviewIndex = ? AND email = ?',
-				status, statusLabel, reviewIndex, reviewer, function (err) {
-					if (err) return reject(err);
-					resolve();
-				});
+			var user = User(reviewer);
+			if (user.name) {
+				db.run('UPDATE reviewers SET email = ? WHERE reviewIndex = ? AND email = ?',
+					user.toString(), reviewIndex, user.email, updateNameDone);
+			} else {
+				updateNameDone();
+			}
+			function updateNameDone(err) {
+				if (err) return reject(err);
+				db.run('UPDATE reviewers SET status = ?, statusLabel = ? WHERE reviewIndex = ? AND email = ?',
+					status, statusLabel, reviewIndex, reviewer, updateStatusDone);
+			}
+			function updateStatusDone(err) {
+				if (err) return reject(err);
+				resolve();
+			}
 		});
 	},
 	
