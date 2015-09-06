@@ -116,13 +116,18 @@ var proto = {
 						status: event.data.status,
 						statusLabel: event.data.statusLabel,
 						whenUpdated: Math.floor(event.id)
-					}
+					};
 					Reviews.updateMetadata(me.reviewIndex, message).then(function () {
 						Notification.changeReviewStatus(me.reviewIndex, event.data.status, event.data.statusLabel);
 					});
 					break;
 				case 'changeReviewerStatus':
-					Reviews.updateReviewerStatus(me.reviewIndex, event.data.reviewer, event.data.status, event.data.label).then(function () {
+					message = {
+						name: event.data.reviewer,
+						status: event.data.status,
+						statusLabel: event.data.statusLabel
+					};
+					Reviews.updateReviewerStatus(me.reviewIndex, message).then(function () {
 						Notification.changeReviewerStatus(me.reviewIndex, event.data.reviewer, event.data.status, event.data.label);
 					});
 					break;

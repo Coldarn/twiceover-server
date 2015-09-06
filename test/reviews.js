@@ -1,3 +1,6 @@
+/* global it */
+/* global describe */
+
 var chai = require('chai');
 chai.use(require("chai-as-promised"));
 var expect = chai.expect;
@@ -43,7 +46,7 @@ describe('Reviews', function () {
 	
 	describe('#addReviewers', function () {
 		it('should be setup correctly', function () {
-			return expect(Reviews.getReviewers(5)).to.become([Data.reviewers[0]]);
+			return expect(Reviews.getReviewers(5)).to.become([Data.reviewers[5].base[0]]);
 		});
 		function addAndExpect(toAdd, toExpect) {
 			return function () {
@@ -51,14 +54,32 @@ describe('Reviews', function () {
 				return expect(Reviews.getReviewers(5)).to.become(eval(toExpect));	// eval to delay resolution
 			}
 		}
-		it('should add bare emails', addAndExpect(['george@example.com'], 'Data.reviewers'));
-		it('should deduplicate emails', addAndExpect(['george@example.com'], 'Data.reviewers'));
-		it('should be case-insensitive', addAndExpect(['GEORGE@example.com'], 'Data.reviewersCapitalized'));
-		it('should expand emails in-place', addAndExpect(['Bob George <george@example.com>'], 'Data.reviewersExpanded'));
+		it('should add bare emails', addAndExpect(['george@example.com'], 'Data.reviewers[5].base'));
+		it('should deduplicate emails', addAndExpect(['george@example.com'], 'Data.reviewers[5].base'));
+		it('should be case-insensitive', addAndExpect(['GEORGE@example.com'], 'Data.reviewers[5].capitalized'));
+		it('should expand emails in-place', addAndExpect(['Bob George <george@example.com>'], 'Data.reviewers[5].expanded'));
 		it('should expand emails in-place with duplicates',
-			addAndExpect(['GEORGE@example.com', 'Bob George <george@example.com>'], 'Data.reviewersExpanded'));
-		it('should still match bare emails', addAndExpect(['george@example.com'], 'Data.reviewers'));
-		it('should dedupe and insert', addAndExpect(['george@example.com', 'bob@example.com'], 'Data.reviewersAdded'));
+			addAndExpect(['GEORGE@example.com', 'Bob George <george@example.com>'], 'Data.reviewers[5].expanded'));
+		it('should still match bare emails', addAndExpect(['george@example.com'], 'Data.reviewers[5].base'));
+		it('should dedupe and insert', addAndExpect(['george@example.com', 'bob@example.com'], 'Data.reviewers[5].added'));
+	});
+	
+	describe('#updateReviewerStatus', function () {
+		it('should be setup correctly', function () {
+			return expect(Reviews.getReviewers(3)).to.become(Data.reviewers[3].base);
+		});
+		function updateAndExpect(update, toExpect) {
+			return function () {
+				Reviews.updateReviewerStatus(3, eval(update));
+				return expect(Reviews.getReviewers(3)).to.become(eval(toExpect));	// eval to delay resolution
+			}
+		}
+		it('should update status with bare emails', updateAndExpect('Data.reviewers[3].baseUpdated[0]', 'Data.reviewers[3].baseUpdated'));
+		it('should expand emails while updating status', updateAndExpect('Data.reviewers[3].expanded[0]', 'Data.reviewers[3].expanded'));
+		it('should still update status with bare email', updateAndExpect('Data.reviewers[3].baseUpdated[0]', 'Data.reviewers[3].baseUpdated'));
+		it('should update second status fully', updateAndExpect('Data.reviewers[3].secondUpdate[1]', 'Data.reviewers[3].secondUpdate'));
+		it('should update second status partially', updateAndExpect('Data.reviewers[3].secondUpdate2[1]', 'Data.reviewers[3].secondUpdate2'));
+		it('should add reviewers', updateAndExpect('Data.reviewers[3].thirdUpdate[3]', 'Data.reviewers[3].thirdUpdate'));
 	});
 	
 	describe('#getReviews', function () {
@@ -107,20 +128,60 @@ describe('Reviews', function () {
 	});
 });
 
-Data.reviewers = [
-	{ name: 'coldarn@gmail.com', status: null, statusLabel: null },
-	{ name: 'george@example.com', status: null, statusLabel: null }
-];
-Data.reviewersCapitalized = [
-	Data.reviewers[0],
+Data.reviewers = {
+	5: { base: [
+		{ name: 'coldarn@gmail.com', status: null, statusLabel: null },
+		{ name: 'george@example.com', status: null, statusLabel: null }
+	]},
+	3: { base: [
+		{ name: 'bob.smith@example.com', status: null, statusLabel: null },
+		{ name: 'john.doe@example.com', status: null, statusLabel: null },
+		{ name: 'bonzai@foo.com', status: null, statusLabel: null }
+	]}
+};
+Data.reviewers[5].capitalized = [
+	Data.reviewers[5].base[0],
 	{ name: 'GEORGE@example.com', status: null, statusLabel: null }
 ];
-Data.reviewersExpanded = [
-	Data.reviewers[0],
+Data.reviewers[5].expanded = [
+	Data.reviewers[5].base[0],
 	{ name: 'Bob George <george@example.com>', status: null, statusLabel: null }
 ];
-Data.reviewersAdded = [
-	Data.reviewers[0],
-	Data.reviewers[1],
+Data.reviewers[5].added = [
+	Data.reviewers[5].base[0],
+	Data.reviewers[5].base[1],
 	{ name: 'bob@example.com', status: null, statusLabel: null }
+];
+
+
+Data.reviewers[3].baseUpdated = [
+	{ name: 'bob.smith@example.com', status: 'active', statusLabel: 'Active' },
+	Data.reviewers[3].base[1],
+	Data.reviewers[3].base[2]
+];
+Data.reviewers[3].expanded = [
+	{ name: 'Bob Smith <bob.smith@example.com>', status: null, statusLabel: null },
+	Data.reviewers[3].base[1],
+	Data.reviewers[3].base[2]
+];
+Data.reviewers[3].expandedUpdated = [
+	{ name: 'Bob Smith <bob.smith@example.com>', status: 'active', statusLabel: 'Active' },
+	Data.reviewers[3].base[1],
+	Data.reviewers[3].base[2]
+];
+Data.reviewers[3].secondUpdate = [
+	{ name: 'bob.smith@example.com', status: 'active', statusLabel: 'Active' },
+	{ name: 'john.doe@example.com', status: 'needsWork', statusLabel: 'Needs Work' },
+	Data.reviewers[3].base[2]
+];
+Data.reviewers[3].secondUpdate2 = [
+	Data.reviewers[3].secondUpdate[0],
+	{ name: 'john.doe@example.com', status: 'needsWork', statusLabel: 'Need to update doco and fix styling' },
+	Data.reviewers[3].base[2]
+];
+Data.reviewers[3].thirdUpdate = [
+	Data.reviewers[3].secondUpdate[0],
+	Data.reviewers[3].secondUpdate2[1],
+	Data.reviewers[3].base[2],
+	{ name: 'john.smith@example.com', status: 'looksGood', statusLabel: 'Looks Good' },
 ];

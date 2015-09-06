@@ -116,55 +116,51 @@ module.exports = {
 	},
 	
 	addReviewers: function (reviewIndex, reviewerEmails) {
+		var me = this;
 		return doNext(function () {
-			var reviewerEmailsToInsert = reviewerEmails.slice();
-			return db.runAsync('BEGIN TRANSACTION')
-				.then(function () {
-					// Update names for any who's names have been updated
-					var statement = db.prepare('UPDATE reviewers SET email = ? 	\
-						WHERE reviewIndex = ? AND (email = ? OR email LIKE ?)');
-					reviewerEmails.forEach(function (email) {
-						var user = User(email);
-						statement.run(user.toString(), reviewIndex, user.email, '%<' + user.email + '>%', function (err) {
-							if (this.changes) {
-								reviewerEmailsToInsert.splice(reviewerEmailsToInsert.indexOf(email), 1);
-							}
-						});
-					});
-					return statement.finalizeAsync();
-				})
-				.then(function () {			
-					// Add any new users
-					var statement = db.prepare('INSERT OR IGNORE INTO reviewers (reviewIndex, email) VALUES (?, ?)');
-					reviewerEmailsToInsert.forEach(function (email) {
-						statement.run(reviewIndex, email.trim());
-					});
-					return statement.finalizeAsync();
-				})
-				.then(function () {
-					return db.runAsync('COMMIT');
-				});
+			return me._addReviewers(reviewIndex, reviewerEmails);
 		});
 	},
 	
-	updateReviewerStatus: function (reviewIndex, reviewer, status, statusLabel) {
-		return new Promise(function (resolve, reject) {
-			var user = User(reviewer);
-			if (user.name) {
-				db.run('UPDATE reviewers SET email = ? WHERE reviewIndex = ? AND email = ?',
-					user.toString(), reviewIndex, user.email, updateNameDone);
-			} else {
-				updateNameDone();
-			}
-			function updateNameDone(err) {
-				if (err) return reject(err);
-				db.run('UPDATE reviewers SET status = ?, statusLabel = ? WHERE reviewIndex = ? AND email = ?',
-					status, statusLabel, reviewIndex, reviewer, updateStatusDone);
-			}
-			function updateStatusDone(err) {
-				if (err) return reject(err);
-				resolve();
-			}
+	_addReviewers: function (reviewIndex, reviewerEmails) {
+		var reviewerEmailsToInsert = reviewerEmails.slice();
+		return db.runAsync('BEGIN TRANSACTION')
+			.then(function () {
+				// Update names for any who's names have been updated
+				var statement = db.prepare('UPDATE reviewers SET email = ? 	\
+					WHERE reviewIndex = ? AND (email = ? OR email LIKE ?)');
+				reviewerEmails.forEach(function (email) {
+					var user = User(email);
+					statement.run(user.toString(), reviewIndex, user.email, '%<' + user.email + '>%', function (err) {
+						if (this.changes) {
+							reviewerEmailsToInsert.splice(reviewerEmailsToInsert.indexOf(email), 1);
+						}
+					});
+				});
+				return statement.finalizeAsync();
+			})
+			.then(function () {			
+				// Add any new users
+				var statement = db.prepare('INSERT OR IGNORE INTO reviewers (reviewIndex, email) VALUES (?, ?)');
+				reviewerEmailsToInsert.forEach(function (email) {
+					statement.run(reviewIndex, email.trim());
+				});
+				return statement.finalizeAsync();
+			})
+			.then(function () {
+				return db.runAsync('COMMIT');
+			});
+	},
+	
+	updateReviewerStatus: function (reviewIndex, update) {
+		var me = this;
+		return doNext(function () {
+			var user = User(update.name);
+			return me._addReviewers(reviewIndex, [user.toString()]).then(function updateStatus() {
+				return db.runAsync('UPDATE reviewers SET status = ?, statusLabel = ? 	\
+					WHERE reviewIndex = ? AND (email = ? OR email LIKE ?)',
+					update.status, update.statusLabel, reviewIndex, user.email, '%<' + user.email + '>%');
+			});
 		});
 	},
 	
