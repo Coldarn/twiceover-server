@@ -37,7 +37,8 @@ var dbPromise = Promise.settle([
 ]);
 	
 module.exports = {
-	logErrors: true,
+	db: db,				// Exposed ONLY for testing purposes
+	logErrors: true,	// Exposed ONLY for testing purposes
 	
 	getRecentReviews: function (count) {
 		return doNext(function () {
@@ -47,28 +48,25 @@ module.exports = {
 	},
 	
 	getReviewIndex: function (reviewIdOrIndex) {
-		return new Promise(function (resolve, reject) {
-				db.get('SELECT ix FROM reviews WHERE ix = ? OR id = ?',
-					reviewIdOrIndex, reviewIdOrIndex, getIndexDone);
-			
-			function getIndexDone(err, row) {
-				if (err) return reject(err);
-				if (!row) return reject('Unknown review: ' + reviewIdOrIndex);
-				resolve(row.ix);
-			}
+		return doNext(function () {
+			return db.getAsync('SELECT ix FROM reviews WHERE ix = ? OR id = ?', reviewIdOrIndex, reviewIdOrIndex)
+				.then(function getIndexDone(row) {
+					if (!row) throw new Error('Unknown review: ' + reviewIdOrIndex);
+					return row.ix;
+				});
 		});
 	},
 	
 	getOrCreateReview: function (reviewID) {
-		var me = this;
-		
-		return new Promise(function (resolve, reject) {
-			db.run('INSERT OR IGNORE INTO reviews (id) VALUES (?)', reviewID, insertDone);
-				
-			function insertDone(err) {
-				if (err) reject(err);
-				resolve(me.getReviewIndex(reviewID));
+		return doNext(function () {
+			if (typeof reviewID !== 'string' || reviewID.length < 22 || reviewID.length > 23) {
+				throw new Error("Invalid review ID: " + reviewID);
 			}
+			return db.runAsync('INSERT OR IGNORE INTO reviews (id) VALUES (?)', reviewID).then(function insertDone() {
+				return db.getAsync('SELECT ix FROM reviews WHERE id = ?', reviewID);
+			}).then(function getIX(row) {
+				return row.ix;
+			});
 		});
 	},
 	

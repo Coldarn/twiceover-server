@@ -47,6 +47,57 @@ describe('Reviews', function () {
 		])).to.be.fulfilled;
 	});
 	
+	describe('#getReviewIndex', function () {
+		it('should reject with invalid review indexes', function () {
+			return expect(Reviews.getReviewIndex(99)).to.be.rejectedWith(Error);
+		});
+		it('should reject with invalid review IDs', function () {
+			return expect(Reviews.getReviewIndex('abcdefg')).to.be.rejectedWith(Error);
+		});
+		it('should resolve with valid review indexes', function () {
+			return expect(Reviews.getReviewIndex(3)).to.become(3);
+		});
+		it('should resolve with valid review indexes', function () {
+			return expect(Reviews.getReviewIndex('odaxW8dyuQVEUDKneBe6TNW')).to.become(3);
+		});
+	});
+	
+	describe('#getOrCreateReview', function () {
+		it('should start with a known state', function () {
+			return expect(Reviews.getRecentReviews()).to.eventually.have.length(5);
+		});
+		it('should return indexes for known review IDs', function () {
+			return expect(Promise.all([
+				expect(Reviews.getOrCreateReview('7kULUz32rDthib47gMQQMoc')).to.become(2),
+				expect(Reviews.getRecentReviews()).to.eventually.have.length(5)
+			])).to.be.fulfilled;
+		});
+		it('should reject for invalid IDs', function () {
+			return expect(Promise.all([
+				expect(Reviews.getOrCreateReview('7kULUz32rDthib47gMQQM')).to.be.rejectedWith(Error),
+				expect(Reviews.getOrCreateReview('7kULUz32rDthib47gMQQMocww')).to.be.rejectedWith(Error),
+				expect(Reviews.getOrCreateReview(null)).to.be.rejectedWith(Error),
+				expect(Reviews.getOrCreateReview(99)).to.be.rejectedWith(Error)
+			])).to.be.fulfilled;
+		});
+		it('should insert new reviews for valid IDs', function () {
+			return expect(Promise.all([
+				expect(Reviews.getOrCreateReview('7kULUz32rDthib47gMQQMo0')).to.become(6),
+				expect(Reviews.getRecentReviews()).to.eventually.have.length(6),
+				expect(Reviews.getReview(6)).to.become(Data.reviews[6])
+			])).to.be.fulfilled;
+		});
+		it('should be case-SENSITIVE', function () {
+			return expect(Promise.all([
+				expect(Reviews.getOrCreateReview('7KULUz32rDthib47gMQQMo0')).to.become(7),
+				expect(Reviews.getRecentReviews()).to.eventually.have.length(7)
+			])).to.be.fulfilled;
+		});
+		it('should clean up successfully', function () {
+			return expect(Reviews.db.runAsync('DELETE FROM reviews WHERE ix > 5')).to.be.fulfilled;
+		});
+	});
+	
 	describe('#getReview', function () {
 		it('should reject with invalid review indexes', function () {
 			return expect(Reviews.getReview(99)).to.be.rejectedWith(Error);
@@ -73,25 +124,25 @@ describe('Reviews', function () {
 			return expect(Promise.all([
 				Reviews.updateMetadata(99, { description: "It's a no-go." }),
 				expect(Reviews.getRecentReviews()).to.eventually.have.length(5)
-			])).to.fulfilled;
+			])).to.be.fulfilled;
 		});
 		it('should update a single field correctly', function () {
 			return expect(Promise.all([
 				Reviews.updateMetadata(2, { description: Data.reviews[2].updatedDesc.description }),
 				expect(Reviews.getReview(2)).to.become(Data.reviews[2].updatedDesc)
-			])).to.fulfilled;
+			])).to.be.fulfilled;
 		});
 		it('should update all fields by index', function () {
 			return expect(Promise.all([
 				Reviews.updateMetadata(2, Data.reviews[2].updatedAll),
 				expect(Reviews.getReview(2)).to.become(Data.reviews[2].updatedAll)
-			])).to.fulfilled;
+			])).to.be.fulfilled;
 		});
 		it('should update all fields by ID', function () {
 			return expect(Promise.all([
 				Reviews.updateMetadata('7kULUz32rDthib47gMQQMoc', Data.reviews[2].base),
 				expect(Reviews.getReview(2)).to.become(Data.reviews[2].base)
-			])).to.fulfilled;
+			])).to.be.fulfilled;
 		});
 	});
 	
@@ -198,6 +249,18 @@ Data.reviews = {
 				{"name":"john.smith@example.com","status":null,"statusLabel":null}
 			]
 		}
+	},
+	6: {
+		"ix":6,
+		"id":"7kULUz32rDthib47gMQQMo0",
+		"title":null,
+		"description":null,
+		"owner":null,
+		"whenCreated":null,
+		"status":"active",
+		"statusLabel":null,
+		"whenUpdated":null,
+		"reviewers":[]
 	}
 }
 Data.reviews[2].updatedDesc = JSON.parse(JSON.stringify(Data.reviews[2].base));
