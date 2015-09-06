@@ -4,6 +4,7 @@ var sqlite3 = require('sqlite3');
 
 var Reviews = require('./reviews.js');
 var Notification = require('./notification.js');
+var config = require('./config.json');
 
 var loadedReviews = {};
 
@@ -139,7 +140,7 @@ var proto = {
 
 function Review(index) {
 	var obj = loadedReviews[index],
-		reviewFilePath = 'reviews/' + index + '.db';
+		reviewFilePath = require('path').join(config.reviews.path, index + '.db');
 	if (obj) {
 		return obj;
 	}

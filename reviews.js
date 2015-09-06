@@ -5,8 +5,9 @@ var path = require('path');
 var sqlite3 = require('sqlite3');
 
 var User = require('./user.js');
+var config = require('./config.json');
 
-var db = new sqlite3.Database(path.join('reviews', 'reviews.db'));
+var db = new sqlite3.Database(path.join(config.reviews.path, config.reviews.database));
 
 var updateColumns = {
 	title: 'title',

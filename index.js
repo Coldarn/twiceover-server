@@ -9,7 +9,7 @@ var http = require('http');
 var Reviews = require('./reviews.js');
 var Review = require('./review.js');
 
-var HOST_INFO = require('./host.json');
+var HOST_INFO = require('./config.json').host;
 
 
 

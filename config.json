@@ -1,0 +1,10 @@
+{
+	"host": {
+		"name": "localhost",
+		"port": 3000
+	},
+	"reviews": {
+		"path": "reviews",
+		"database": "reviews.db"
+	}
+}

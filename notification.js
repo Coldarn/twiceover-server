@@ -12,7 +12,7 @@ if (!fs.existsSync('mailserver.json')) {
 }
 
 
-var HOST_INFO = require('./host.json');
+var HOST_INFO = require('./config.json').host;
 var Reviews = require('./reviews.js');
 
 var FROM_ADDR = '"Twice-Over" <no-reply@' + HOST_INFO.name + '>';
