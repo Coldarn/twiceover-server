@@ -31,7 +31,7 @@ describe('Reviews', function () {
 		expect(Reviews).to.be.ok;
 		
 		// Turn off error logging to keep the run reports clean
-		Reviews.logErrors = false;
+		Reviews._logErrors = false;
 	});
 	
 	it('should queue and handle all requests in order', function () {
@@ -94,7 +94,7 @@ describe('Reviews', function () {
 			])).to.be.fulfilled;
 		});
 		it('should clean up successfully', function () {
-			return expect(Reviews.db.runAsync('DELETE FROM reviews WHERE ix > 5')).to.be.fulfilled;
+			return expect(Reviews._db.runAsync('DELETE FROM reviews WHERE ix > 5')).to.be.fulfilled;
 		});
 	});
 	

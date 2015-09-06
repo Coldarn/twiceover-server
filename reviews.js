@@ -37,8 +37,8 @@ var dbPromise = Promise.settle([
 ]);
 	
 module.exports = {
-	db: db,				// Exposed ONLY for testing purposes
-	logErrors: true,	// Exposed ONLY for testing purposes
+	_db: db,			// Exposed ONLY for testing purposes
+	_logErrors: true,	// Exposed ONLY for testing purposes
 	
 	getRecentReviews: function (count) {
 		return doNext(function () {
@@ -182,7 +182,7 @@ module.exports = {
 function doNext(fn) {
 	var p = dbPromise.then(fn);
 	dbPromise = p.catch(function (err) {
-		if (module.exports.logErrors) {
+		if (module.exports._logErrors) {
 			console.error(err.stack ? err.stack : err);
 		}
 	});
