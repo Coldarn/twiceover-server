@@ -8,6 +8,7 @@ var path = require('path');
 var TEST_FILES = 'test/files';
 var TEST_TEMPLATES = 'test/templates';
 
+var Data = {};
 var config = require('../config.json');
 var Reviews;
 
@@ -40,8 +41,27 @@ describe('Reviews', function () {
 		])).to.be.fulfilled;
 	});
 	
-	describe('getReviews tests', function () {
-		it('#getReviewsIncludingReviewer before adding a reviewer', function () {
+	describe('#addReviewers', function () {
+		it('should be setup correctly', function () {
+			return expect(Reviews.getReviewers(5)).to.become([Data.reviewers[0]]);
+		});
+		function addAndExpect(toAdd, toExpect) {
+			return function () {
+				Reviews.addReviewers(5, toAdd);
+				return expect(Reviews.getReviewers(5)).to.become(eval(toExpect));	// eval to delay resolution
+			}
+		}
+		it('should add bare emails', addAndExpect(['george@example.com'], 'Data.reviewers'));
+		it('should deduplicate emails', addAndExpect(['george@example.com'], 'Data.reviewers'));
+		it('should be case-insensitive', addAndExpect(['GEORGE@example.com'], 'Data.reviewersCapitalized'));
+		it('should expand emails in-place', addAndExpect(['Bob George <george@example.com>'], 'Data.reviewersExpanded'));
+		it('should expand emails in-place with duplicates',
+			addAndExpect(['GEORGE@example.com', 'Bob George <george@example.com>'], 'Data.reviewersExpanded'));
+		it('should still match bare emails', addAndExpect(['george@example.com'], 'Data.reviewers'));
+	});
+	
+	describe('#getReviews', function () {
+		it('..IncludingReviewer before adding a reviewer', function () {
 			return expect(Reviews.getReviewsIncludingReviewer('bob@foo.com'))
 				.to.become([{
 					"ix": 1,
@@ -52,7 +72,7 @@ describe('Reviews', function () {
 					"statusLabel": null
 				}]);
 		});
-		it('#getReviewsExcludingReviewer before adding a reviewer', function () {
+		it('..ExcludingReviewer before adding a reviewer', function () {
 			return expect(Reviews.getReviewsExcludingReviewer('bob@foo.com'))
 				.to.eventually.have.length(4);
 		});
@@ -61,7 +81,7 @@ describe('Reviews', function () {
 			return expect(Reviews.addReviewers(2, ['bob@foo.com'])).to.be.fulfilled;
 		});
 			
-		it('#getReviewsIncludingReviewer after adding a reviewer', function () {
+		it('..IncludingReviewer after adding a reviewer', function () {
 			return expect(Reviews.getReviewsIncludingReviewer('bob@foo.com'))
 				.to.become([{
 					"ix": 2,
@@ -79,9 +99,22 @@ describe('Reviews', function () {
 					"statusLabel": null
 				}]);
 		});
-		it('#getReviewsExcludingReviewer after adding a reviewer', function () {
+		it('..ExcludingReviewer after adding a reviewer', function () {
 			return expect(Reviews.getReviewsExcludingReviewer('bob@foo.com'))
 				.to.eventually.have.length(3);
 		});
 	});
 });
+
+Data.reviewers = [
+	{ name: 'coldarn@gmail.com', status: null, statusLabel: null }, 
+	{ name: 'george@example.com', status: null, statusLabel: null }
+];
+Data.reviewersCapitalized = [
+	{ name: 'coldarn@gmail.com', status: null, statusLabel: null }, 
+	{ name: 'GEORGE@example.com', status: null, statusLabel: null }
+];
+Data.reviewersExpanded = [
+	{ name: 'coldarn@gmail.com', status: null, statusLabel: null }, 
+	{ name: 'Bob George <george@example.com>', status: null, statusLabel: null }
+];

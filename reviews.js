@@ -117,20 +117,26 @@ module.exports = {
 	
 	addReviewers: function (reviewIndex, reviewerEmails) {
 		return doNext(function () {
+			var reviewerEmailsToInsert = reviewerEmails.slice();
 			return db.runAsync('BEGIN TRANSACTION')
 				.then(function () {
 					// Update names for any who's names have been updated
-					var statement = db.prepare('UPDATE reviewers SET email = ? WHERE reviewIndex = ? AND email = ?');
+					var statement = db.prepare('UPDATE reviewers SET email = ? 	\
+						WHERE reviewIndex = ? AND (email = ? OR email LIKE ?)');
 					reviewerEmails.forEach(function (email) {
 						var user = User(email);
-						statement.run(user.toString(), reviewIndex, user.email);
+						statement.run(user.toString(), reviewIndex, user.email, '%<' + user.email + '>%', function (err) {
+							if (this.changes) {
+								reviewerEmailsToInsert.splice(reviewerEmailsToInsert.indexOf(email), 1);
+							}
+						});
 					});
 					return statement.finalizeAsync();
 				})
 				.then(function () {			
 					// Add any new users
 					var statement = db.prepare('INSERT OR IGNORE INTO reviewers (reviewIndex, email) VALUES (?, ?)');
-					reviewerEmails.forEach(function (email) {
+					reviewerEmailsToInsert.forEach(function (email) {
 						statement.run(reviewIndex, email.trim());
 					});
 					return statement.finalizeAsync();
@@ -159,6 +165,13 @@ module.exports = {
 				if (err) return reject(err);
 				resolve();
 			}
+		});
+	},
+	
+	getReviewers: function (reviewIndex) {
+		return doNext(function () {
+			return db.allAsync('SELECT email as name, status, statusLabel FROM reviewers WHERE reviewIndex = ?	\
+				ORDER BY rowid ASC', reviewIndex);
 		});
 	},
 	
