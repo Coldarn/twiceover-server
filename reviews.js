@@ -8,10 +8,10 @@ var Promise = require('bluebird');
 var User = require('./user.js');
 var config = require('./config.json');
 
-var db = new sqlite3.Database(path.join(config.reviews.path, config.reviews.database));
+Promise.promisifyAll(sqlite3.Database.prototype);
+Promise.promisifyAll(sqlite3.Statement.prototype);
 
-Promise.promisifyAll(db);
-Promise.promisifyAll(db.prepare('SELECT 1').__proto__);
+var db = new sqlite3.Database(path.join(config.reviews.path, config.reviews.database));
 
 var updateColumns = {
 	title: 'title',
@@ -116,27 +116,29 @@ module.exports = {
 	},
 	
 	addReviewers: function (reviewIndex, reviewerEmails) {
-		return dbPromise.return(db.runAsync('BEGIN TRANSACTION')
-			.then(function () {
-				// Update names for any who's names have been updated
-				var statement = db.prepare('UPDATE reviewers SET email = ? WHERE reviewIndex = ? AND email = ?');
-				reviewerEmails.forEach(function (email) {
-					var user = User(email);
-					statement.run(user.toString(), reviewIndex, user.email);
+		return doNext(function () {
+			return db.runAsync('BEGIN TRANSACTION')
+				.then(function () {
+					// Update names for any who's names have been updated
+					var statement = db.prepare('UPDATE reviewers SET email = ? WHERE reviewIndex = ? AND email = ?');
+					reviewerEmails.forEach(function (email) {
+						var user = User(email);
+						statement.run(user.toString(), reviewIndex, user.email);
+					});
+					return statement.finalizeAsync();
+				})
+				.then(function () {			
+					// Add any new users
+					var statement = db.prepare('INSERT OR IGNORE INTO reviewers (reviewIndex, email) VALUES (?, ?)');
+					reviewerEmails.forEach(function (email) {
+						statement.run(reviewIndex, email.trim());
+					});
+					return statement.finalizeAsync();
+				})
+				.then(function () {
+					return db.runAsync('COMMIT');
 				});
-				return statement.finalizeAsync();
-			})
-			.then(function () {			
-				// Add any new users
-				var statement = db.prepare('INSERT OR IGNORE INTO reviewers (reviewIndex, email) VALUES (?, ?)');
-				reviewerEmails.forEach(function (email) {
-					statement.run(reviewIndex, email.trim());
-				});
-				return statement.finalizeAsync();
-			})
-			.then(function () {
-				return db.runAsync('COMMIT');
-			}));
+		});
 	},
 	
 	updateReviewerStatus: function (reviewIndex, reviewer, status, statusLabel) {
@@ -161,18 +163,24 @@ module.exports = {
 	},
 	
 	getReviewsIncludingReviewer: function (email) {
-		return dbPromise.return(
-			db.allAsync('SELECT ix, title, owner, created AS whenCreated, status, statusLabel FROM reviews	\
-				WHERE owner LIKE ?																			\
-				OR ix IN (SELECT reviewIndex FROM reviewers WHERE email = ?)								\
-				ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email));
+		return doNext(function () {
+			return db.allAsync('SELECT ix, title, owner, created AS whenCreated, status, statusLabel FROM reviews	\
+				WHERE owner LIKE ?																					\
+				OR ix IN (SELECT reviewIndex FROM reviewers WHERE email = ?)										\
+				ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email);
+		});
 	},
 	
 	getReviewsExcludingReviewer: function (email) {
-		return dbPromise.return(
-			db.allAsync('SELECT ix, title, owner, created AS whenCreated, status, statusLabel FROM reviews	\
-				WHERE owner NOT LIKE ?																		\
-				AND ix NOT IN (SELECT reviewIndex FROM reviewers WHERE email = ?)							\
-				ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email));
+		return doNext(function () {
+			return db.allAsync('SELECT ix, title, owner, created AS whenCreated, status, statusLabel FROM reviews	\
+				WHERE owner NOT LIKE ?																				\
+				AND ix NOT IN (SELECT reviewIndex FROM reviewers WHERE email = ?)									\
+				ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email);
+		});
 	}
 };
+
+function doNext(fn) {
+	return dbPromise = dbPromise.then(fn);
+}

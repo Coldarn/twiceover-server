@@ -27,6 +27,19 @@ describe('Reviews', function () {
 		expect(Reviews).to.be.ok;
 	});
 	
+	it('should queue and handle all requests in order', function () {
+		var email = 'bonzai@foo.com';
+		return expect(Promise.all([
+			expect(Reviews.getReviewsIncludingReviewer(email)).to.eventually.have.length(0),
+			Reviews.addReviewers(1, [email]),
+			Reviews.addReviewers(2, [email]),
+			expect(Reviews.getReviewsIncludingReviewer(email)).to.eventually.have.length(2),
+			Reviews.addReviewers(3, [email]),
+			expect(Reviews.getReviewsIncludingReviewer(email)).to.eventually.have.length(3),
+			Reviews.addReviewers(4, [email]),
+		])).to.be.fulfilled;
+	});
+	
 	describe('getReviews tests', function () {
 		it('#getReviewsIncludingReviewer before adding a reviewer', function () {
 			return expect(Reviews.getReviewsIncludingReviewer('bob@foo.com'))
