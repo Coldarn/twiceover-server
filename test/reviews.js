@@ -58,6 +58,7 @@ describe('Reviews', function () {
 		it('should expand emails in-place with duplicates',
 			addAndExpect(['GEORGE@example.com', 'Bob George <george@example.com>'], 'Data.reviewersExpanded'));
 		it('should still match bare emails', addAndExpect(['george@example.com'], 'Data.reviewers'));
+		it('should dedupe and insert', addAndExpect(['george@example.com', 'bob@example.com'], 'Data.reviewersAdded'));
 	});
 	
 	describe('#getReviews', function () {
@@ -107,14 +108,19 @@ describe('Reviews', function () {
 });
 
 Data.reviewers = [
-	{ name: 'coldarn@gmail.com', status: null, statusLabel: null }, 
+	{ name: 'coldarn@gmail.com', status: null, statusLabel: null },
 	{ name: 'george@example.com', status: null, statusLabel: null }
 ];
 Data.reviewersCapitalized = [
-	{ name: 'coldarn@gmail.com', status: null, statusLabel: null }, 
+	Data.reviewers[0],
 	{ name: 'GEORGE@example.com', status: null, statusLabel: null }
 ];
 Data.reviewersExpanded = [
-	{ name: 'coldarn@gmail.com', status: null, statusLabel: null }, 
+	Data.reviewers[0],
 	{ name: 'Bob George <george@example.com>', status: null, statusLabel: null }
+];
+Data.reviewersAdded = [
+	Data.reviewers[0],
+	Data.reviewers[1],
+	{ name: 'bob@example.com', status: null, statusLabel: null }
 ];
