@@ -3,11 +3,15 @@
 
 var path = require('path');
 var sqlite3 = require('sqlite3');
+var Promise = require('bluebird');
 
 var User = require('./user.js');
 var config = require('./config.json');
 
 var db = new sqlite3.Database(path.join(config.reviews.path, config.reviews.database));
+
+Promise.promisifyAll(db);
+Promise.promisifyAll(db.prepare('SELECT 1').__proto__);
 
 var updateColumns = {
 	title: 'title',
@@ -20,15 +24,17 @@ var updateColumns = {
 };
 
 // Don't care if any of these fail, that just means they've already been run
-db.run("CREATE TABLE reviews (ix INTEGER PRIMARY KEY, id TEXT UNIQUE, title TEXT, description TEXT, owner TEXT, "
-	+ "created INT, status TEXT NOT NULL)", function (err) { });
-db.run('ALTER TABLE reviews ADD COLUMN statusLabel TEXT', function (err) { });
-db.run('ALTER TABLE reviews ADD COLUMN updated INT', function (err) { });
-	
-db.run("CREATE TABLE reviewers (reviewIndex INT NOT NULL, email TEXT NOT NULL COLLATE NOCASE, PRIMARY KEY "
-	+ "(reviewIndex, email))", function (err) { });
-db.run('ALTER TABLE reviewers ADD COLUMN status TEXT', function (err) { });
-db.run('ALTER TABLE reviewers ADD COLUMN statusLabel TEXT', function (err) { });
+var dbPromise = Promise.settle([
+	db.runAsync("CREATE TABLE reviews (ix INTEGER PRIMARY KEY, id TEXT UNIQUE, title TEXT, description TEXT, owner TEXT, "
+		+ "created INT, status TEXT NOT NULL)"),
+	db.runAsync('ALTER TABLE reviews ADD COLUMN statusLabel TEXT'),
+	db.runAsync('ALTER TABLE reviews ADD COLUMN updated INT'),
+		
+	db.runAsync("CREATE TABLE reviewers (reviewIndex INT NOT NULL, email TEXT NOT NULL COLLATE NOCASE, PRIMARY KEY "
+		+ "(reviewIndex, email))"),
+	db.runAsync('ALTER TABLE reviewers ADD COLUMN status TEXT'),
+	db.runAsync('ALTER TABLE reviewers ADD COLUMN statusLabel TEXT')
+]);
 	
 module.exports = {
 	getRecentReviews: function () {
@@ -110,34 +116,27 @@ module.exports = {
 	},
 	
 	addReviewers: function (reviewIndex, reviewerEmails) {
-		return new Promise(function (resolve, reject) {
-			function checkErr(err) {
-				if (err) return reject(err);
-			}
-			db.serialize(function () {
-				db.run('BEGIN TRANSACTION');
-				
+		return dbPromise.return(db.runAsync('BEGIN TRANSACTION')
+			.then(function () {
 				// Update names for any who's names have been updated
-				var updateStmt = db.prepare('UPDATE reviewers SET email = ? WHERE reviewIndex = ? AND email = ?');
+				var statement = db.prepare('UPDATE reviewers SET email = ? WHERE reviewIndex = ? AND email = ?');
 				reviewerEmails.forEach(function (email) {
 					var user = User(email);
-					updateStmt.run(user.toString(), reviewIndex, user.email, checkErr);
+					statement.run(user.toString(), reviewIndex, user.email);
 				});
-				updateStmt.finalize();
-				
+				return statement.finalizeAsync();
+			})
+			.then(function () {			
 				// Add any new users
-				var insertStmt = db.prepare('INSERT OR IGNORE INTO reviewers (reviewIndex, email) VALUES (?, ?)');
+				var statement = db.prepare('INSERT OR IGNORE INTO reviewers (reviewIndex, email) VALUES (?, ?)');
 				reviewerEmails.forEach(function (email) {
-					insertStmt.run(reviewIndex, email.trim(), checkErr);
+					statement.run(reviewIndex, email.trim());
 				});
-				insertStmt.finalize();
-				
-				db.run('COMMIT', function (err) {
-					if (err) return reject(err);
-					resolve();
-				});
-			});
-		});
+				return statement.finalizeAsync();
+			})
+			.then(function () {
+				return db.runAsync('COMMIT');
+			}));
 	},
 	
 	updateReviewerStatus: function (reviewIndex, reviewer, status, statusLabel) {
@@ -162,28 +161,18 @@ module.exports = {
 	},
 	
 	getReviewsIncludingReviewer: function (email) {
-		return new Promise(function (resolve, reject) {
-			db.all('SELECT ix, title, owner, created AS whenCreated, status, statusLabel FROM reviews'
-				+ ' WHERE owner LIKE ?'
-				+ ' OR ix IN (SELECT reviewIndex FROM reviewers WHERE email = ?)'
-				+ ' ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email, getDataDone);
-			function getDataDone(err, rows) {
-				if (err) reject(err);
-				resolve(rows);
-			}
-		});
+		return dbPromise.return(
+			db.allAsync('SELECT ix, title, owner, created AS whenCreated, status, statusLabel FROM reviews	\
+				WHERE owner LIKE ?																			\
+				OR ix IN (SELECT reviewIndex FROM reviewers WHERE email = ?)								\
+				ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email));
 	},
 	
 	getReviewsExcludingReviewer: function (email) {
-		return new Promise(function (resolve, reject) {
-			db.all('SELECT ix, title, owner, created AS whenCreated, status, statusLabel FROM reviews'
-				+ ' WHERE owner NOT LIKE ?'
-				+ ' AND ix NOT IN (SELECT reviewIndex FROM reviewers WHERE email = ?)'
-				+ ' ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email, getDataDone);
-			function getDataDone(err, rows) {
-				if (err) reject(err);
-				resolve(rows);
-			}
-		});
+		return dbPromise.return(
+			db.allAsync('SELECT ix, title, owner, created AS whenCreated, status, statusLabel FROM reviews	\
+				WHERE owner NOT LIKE ?																		\
+				AND ix NOT IN (SELECT reviewIndex FROM reviewers WHERE email = ?)							\
+				ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email));
 	}
 };

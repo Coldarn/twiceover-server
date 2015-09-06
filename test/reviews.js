@@ -1,4 +1,7 @@
-var expect = require('chai').expect;
+var chai = require('chai');
+chai.use(require("chai-as-promised"));
+var expect = chai.expect;
+	
 var fs = require('fs');
 var path = require('path');
 
@@ -19,15 +22,15 @@ describe('Reviews', function () {
 		});
 	});
 	
-	it('should exist', function () {
+	it('module should initialize properly', function () {
 		Reviews = require('../reviews.js');
 		expect(Reviews).to.be.ok;
 	});
 	
-	describe('#getReviewsIncludingReviewer', function () {
-		it('should return the correct set of reviews', function (done) {
-			Reviews.getReviewsIncludingReviewer('bob@foo.com').then(function (reviews) {
-				expect(reviews).to.deep.equal([{
+	describe('getReviews tests', function () {
+		it('#getReviewsIncludingReviewer before adding a reviewer', function () {
+			return expect(Reviews.getReviewsIncludingReviewer('bob@foo.com'))
+				.to.become([{
 					"ix": 1,
 					"title": "Test Review",
 					"owner": "John Doe <john.doe@example.com>",
@@ -35,8 +38,37 @@ describe('Reviews', function () {
 					"status": "active",
 					"statusLabel": null
 				}]);
-				done();
-			});
+		});
+		it('#getReviewsExcludingReviewer before adding a reviewer', function () {
+			return expect(Reviews.getReviewsExcludingReviewer('bob@foo.com'))
+				.to.eventually.have.length(4);
+		});
+		
+		it('add a reviewer', function () {
+			return expect(Reviews.addReviewers(2, ['bob@foo.com'])).to.be.fulfilled;
+		});
+			
+		it('#getReviewsIncludingReviewer after adding a reviewer', function () {
+			return expect(Reviews.getReviewsIncludingReviewer('bob@foo.com'))
+				.to.become([{
+					"ix": 2,
+					"title": "Bob's Code Review #2",
+					"owner": "John Doe <john.doe@example.com>",
+					"whenCreated": 1440047582964,
+					"status": "complete",
+					"statusLabel": null
+				}, {
+					"ix": 1,
+					"title": "Test Review",
+					"owner": "John Doe <john.doe@example.com>",
+					"whenCreated": 1438456772247,
+					"status": "active",
+					"statusLabel": null
+				}]);
+		});
+		it('#getReviewsExcludingReviewer after adding a reviewer', function () {
+			return expect(Reviews.getReviewsExcludingReviewer('bob@foo.com'))
+				.to.eventually.have.length(3);
 		});
 	});
 });
