@@ -39,13 +39,10 @@ var dbPromise = Promise.settle([
 module.exports = {
 	logErrors: true,
 	
-	getRecentReviews: function () {
-		return new Promise(function (resolve, reject) {
-			db.all('SELECT ix, title, owner, created AS whenCreated, status FROM reviews ORDER BY created DESC LIMIT 1000', getDataDone);
-			function getDataDone(err, rows) {
-				if (err) reject(err);
-				resolve(rows);
-			}
+	getRecentReviews: function (count) {
+		return doNext(function () {
+			return db.allAsync('SELECT ix, title, owner, created AS whenCreated, status FROM reviews \
+				ORDER BY created DESC LIMIT ?', count || 100);
 		});
 	},
 	
@@ -92,7 +89,7 @@ module.exports = {
 	},
 	
 	updateMetadata: function (reviewIdOrIndex, metadata) {
-		return new Promise(function (resolve, reject) {
+		return doNext(function () {
 			var sql = [],
 				params = [];
 			Object.keys(metadata).forEach(function (key) {
@@ -104,11 +101,8 @@ module.exports = {
 			if (sql.length === 0) {
 				throw new Error('No metadata given to update!');
 			}
-			params.push(reviewIdOrIndex, reviewIdOrIndex);
-			db.run('UPDATE reviews SET ' + sql.join(',') + ' WHERE ix = ? OR id = ?', params, function (err) {
-				if (err) return reject(err);
-				resolve();
-			});
+			params.push(Number(reviewIdOrIndex), reviewIdOrIndex);
+			return db.runAsync('UPDATE reviews SET ' + sql.join(',') + ' WHERE ix = ? OR id = ?', params);
 		});
 	},
 	

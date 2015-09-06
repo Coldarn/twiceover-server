@@ -52,10 +52,46 @@ describe('Reviews', function () {
 			return expect(Reviews.getReview(99)).to.be.rejectedWith(Error);
 		});
 		it('should return the expected fields by index', function () {
-			return expect(Reviews.getReview(2)).to.become(Data.reviews[2]);
+			return expect(Reviews.getReview(2)).to.become(Data.reviews[2].base);
 		});
 		it('should work with ID strings', function () {
-			return expect(Reviews.getReview('7kULUz32rDthib47gMQQMoc')).to.become(Data.reviews[2]);
+			return expect(Reviews.getReview('7kULUz32rDthib47gMQQMoc')).to.become(Data.reviews[2].base);
+		});
+	});
+	
+	describe('#updateMetadata', function () {
+		it('should reject with invalid metadata', function () {
+			return expect(Reviews.updateMetadata(1, null)).to.be.rejectedWith(Error);
+		});
+		it('should reject with empty metadata object', function () {
+			return expect(Reviews.updateMetadata(1, {})).to.be.rejectedWith(Error);
+		});
+		it('should reject with no matching metadata fields', function () {
+			return expect(Reviews.updateMetadata(1, { bazinga: 12 })).to.be.rejectedWith(Error);
+		});
+		it('should harmlessly do nothing with invalid review ids', function () {
+			return expect(Promise.all([
+				Reviews.updateMetadata(99, { description: "It's a no-go." }),
+				expect(Reviews.getRecentReviews()).to.eventually.have.length(5)
+			])).to.fulfilled;
+		});
+		it('should update a single field correctly', function () {
+			return expect(Promise.all([
+				Reviews.updateMetadata(2, { description: Data.reviews[2].updatedDesc.description }),
+				expect(Reviews.getReview(2)).to.become(Data.reviews[2].updatedDesc)
+			])).to.fulfilled;
+		});
+		it('should update all fields by index', function () {
+			return expect(Promise.all([
+				Reviews.updateMetadata(2, Data.reviews[2].updatedAll),
+				expect(Reviews.getReview(2)).to.become(Data.reviews[2].updatedAll)
+			])).to.fulfilled;
+		});
+		it('should update all fields by ID', function () {
+			return expect(Promise.all([
+				Reviews.updateMetadata('7kULUz32rDthib47gMQQMoc', Data.reviews[2].base),
+				expect(Reviews.getReview(2)).to.become(Data.reviews[2].base)
+			])).to.fulfilled;
 		});
 	});
 	
@@ -145,23 +181,36 @@ describe('Reviews', function () {
 
 Data.reviews = {
 	2: {
-		"ix":2,
-		"id":"7kULUz32rDthib47gMQQMoc",
-		"title":"Bob's Code Review #2",
-		"description":"",
-		"owner":"John Doe <john.doe@example.com>",
-		"whenCreated":1440047582964,
-		"status":"complete",
-		"statusLabel":null,
-		"whenUpdated":1440559322417,
-		"reviewers":[
-			{"name":"bob.smith@example.com","status":null,"statusLabel":null},
-			{"name":"bonzai@foo.com","status":null,"statusLabel":null},
-			{"name":"john.doe@example.com","status":null,"statusLabel":null},
-			{"name":"john.smith@example.com","status":null,"statusLabel":null}
-		]
+		base: {
+			"ix":2,
+			"id":"7kULUz32rDthib47gMQQMoc",
+			"title":"Bob's Code Review #2",
+			"description":"",
+			"owner":"John Doe <john.doe@example.com>",
+			"whenCreated":1440047582964,
+			"status":"complete",
+			"statusLabel":null,
+			"whenUpdated":1440559322417,
+			"reviewers":[
+				{"name":"bob.smith@example.com","status":null,"statusLabel":null},
+				{"name":"bonzai@foo.com","status":null,"statusLabel":null},
+				{"name":"john.doe@example.com","status":null,"statusLabel":null},
+				{"name":"john.smith@example.com","status":null,"statusLabel":null}
+			]
+		}
 	}
 }
+Data.reviews[2].updatedDesc = JSON.parse(JSON.stringify(Data.reviews[2].base));
+Data.reviews[2].updatedDesc.description = "Here's a description";
+
+Data.reviews[2].updatedAll = JSON.parse(JSON.stringify(Data.reviews[2].base));
+Data.reviews[2].updatedAll.title = "CR #2";
+Data.reviews[2].updatedAll.description = "A NEW description!";
+Data.reviews[2].updatedAll.owner = "foo@example.com";
+Data.reviews[2].updatedAll.whenCreated = 1441572281122;
+Data.reviews[2].updatedAll.status = "aborted";
+Data.reviews[2].updatedAll.statusLabel = "Aborted";
+Data.reviews[2].updatedAll.whenUpdated = 1441572314992;
 
 Data.reviewers = {
 	5: { base: [
