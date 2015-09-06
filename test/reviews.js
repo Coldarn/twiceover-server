@@ -29,6 +29,9 @@ describe('Reviews', function () {
 	it('module should initialize properly', function () {
 		Reviews = require('../reviews.js');
 		expect(Reviews).to.be.ok;
+		
+		// Turn off error logging to keep the run reports clean
+		Reviews.logErrors = false;
 	});
 	
 	it('should queue and handle all requests in order', function () {
@@ -42,6 +45,18 @@ describe('Reviews', function () {
 			expect(Reviews.getReviewsIncludingReviewer(email)).to.eventually.have.length(3),
 			Reviews.addReviewers(4, [email]),
 		])).to.be.fulfilled;
+	});
+	
+	describe('#getReview', function () {
+		it('should reject with invalid review indexes', function () {
+			return expect(Reviews.getReview(99)).to.be.rejectedWith(Error);
+		});
+		it('should return the expected fields by index', function () {
+			return expect(Reviews.getReview(2)).to.become(Data.reviews[2]);
+		});
+		it('should work with ID strings', function () {
+			return expect(Reviews.getReview('7kULUz32rDthib47gMQQMoc')).to.become(Data.reviews[2]);
+		});
 	});
 	
 	describe('#addReviewers', function () {
@@ -127,6 +142,26 @@ describe('Reviews', function () {
 		});
 	});
 });
+
+Data.reviews = {
+	2: {
+		"ix":2,
+		"id":"7kULUz32rDthib47gMQQMoc",
+		"title":"Bob's Code Review #2",
+		"description":"",
+		"owner":"John Doe <john.doe@example.com>",
+		"whenCreated":1440047582964,
+		"status":"complete",
+		"statusLabel":null,
+		"whenUpdated":1440559322417,
+		"reviewers":[
+			{"name":"bob.smith@example.com","status":null,"statusLabel":null},
+			{"name":"bonzai@foo.com","status":null,"statusLabel":null},
+			{"name":"john.doe@example.com","status":null,"statusLabel":null},
+			{"name":"john.smith@example.com","status":null,"statusLabel":null}
+		]
+	}
+}
 
 Data.reviewers = {
 	5: { base: [

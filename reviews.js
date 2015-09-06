@@ -37,6 +37,8 @@ var dbPromise = Promise.settle([
 ]);
 	
 module.exports = {
+	logErrors: true,
+	
 	getRecentReviews: function () {
 		return new Promise(function (resolve, reject) {
 			db.all('SELECT ix, title, owner, created AS whenCreated, status FROM reviews ORDER BY created DESC LIMIT 1000', getDataDone);
@@ -74,23 +76,18 @@ module.exports = {
 	},
 	
 	getReview: function (reviewIdOrIndex) {
-		return new Promise(function (resolve, reject) {
+		return doNext(function () {
 			var review;
-			
-			db.get('SELECT ix, id, title, description, owner, created AS whenCreated, status, statusLabel, updated AS whenUpdated FROM reviews'
-				+ ' WHERE ix = ? OR id = ?', Number(reviewIdOrIndex), reviewIdOrIndex, getDataDone);
-				
-			function getDataDone(err, row) {
-				if (err) return reject(err);
-				if (!row) return reject('No review found: ' + reviewIdOrIndex);
-				review = row;
-				db.all('SELECT email as name, status, statusLabel FROM reviewers WHERE reviewIndex = ?', row.ix, getReviewersDone);
-			}
-			function getReviewersDone(err, rows) {
-				if (err) return reject(err);
-				review.reviewers = rows;
-				resolve(review);				
-			}
+			return db.getAsync('SELECT ix, id, title, description, owner, created AS whenCreated, status, statusLabel, 	\
+				updated AS whenUpdated FROM reviews WHERE ix = ? OR id = ?', Number(reviewIdOrIndex), reviewIdOrIndex)
+				.then(function getDataDone(row) {
+					if (!row) throw new Error('No review found: ' + reviewIdOrIndex);
+					review = row;
+					return db.allAsync('SELECT email as name, status, statusLabel FROM reviewers WHERE reviewIndex = ?', row.ix);
+				}).then(function getReviewersDone(rows) {
+					review.reviewers = rows;
+					return review;				
+				});
 		});
 	},
 	
@@ -191,5 +188,11 @@ module.exports = {
 };
 
 function doNext(fn) {
-	return dbPromise = dbPromise.then(fn);
+	var p = dbPromise.then(fn);
+	dbPromise = p.catch(function (err) {
+		if (module.exports.logErrors) {
+			console.error(err.stack ? err.stack : err);
+		}
+	});
+	return p;
 }
