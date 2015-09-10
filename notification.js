@@ -13,7 +13,9 @@ if (!fs.existsSync('mailserver.json')) {
 
 
 var HOST_INFO = require('./config.json').host;
+var User = require('./user.js');
 var Reviews = require('./reviews.js');
+var ThrottleQueue = require('./srv/util/ThrottleQueue.js');
 
 var FROM_ADDR = '"Twice-Over" <no-reply@' + HOST_INFO.name + '>';
 var PORT_STR = HOST_INFO.port && HOST_INFO.port != 80 ? ':' + HOST_INFO.port : '';
@@ -21,9 +23,6 @@ var CLIENT_DOWNLOAD_LINK = ['http://', HOST_INFO.name, PORT_STR, '/Twice-OverSet
 
 function buildReviewLink(reviewIndex) {
 	return ['twiceover://', HOST_INFO.name, PORT_STR, '/api/review/', reviewIndex].join('');
-}
-function getName(email) {
-	return email.substring(0, email.indexOf('<')).trim() || email;
 }
 
 module.exports = {
@@ -33,21 +32,32 @@ module.exports = {
 	},
 	
 	reviewerJoined: function (reviewIndex, newReviewer) {
-		console.log('notification: reviewerJoined', reviewIndex);
-		getReviewAndSend('Review ' + reviewIndex + ': ' + getName(newReviewer) + ' Joined!', reviewIndex);
+		var user = User(newReviewer);
+		getReviewAndSend('Review ' + reviewIndex + ': ' + (user.name || user.email) + ' Joined!', reviewIndex);
 	},
 	
 	changeReviewStatus: function (reviewIndex, status, statusLabel) {
-		console.log('notification: changeReviewStatus', reviewIndex);
-		getReviewAndSend('Review ' + reviewIndex + ': ' + statusLabel, reviewIndex);
+		queueEvent('changeReviewStatus', reviewIndex, statusLabel);
 	},
 	
 	changeReviewerStatus: function (reviewIndex, email, status, statusLabel) {
-		console.log('notification: changeReviewerStatus', reviewIndex);
-		getReviewAndSend('Review ' + reviewIndex + ': ' + getName(email)
-			+ ' changed status to ' + statusLabel, reviewIndex);
+		var user = User(email);
+		queueEvent('changeReviewerStatus', reviewIndex, user.name || user.email
+			+ ' changed status to ' + statusLabel, user.email);
 	}
 };
+
+function queueEvent(eventType, reviewIndex, message, extraKey) {
+	var key = reviewIndex + '-' + eventType + (extraKey ? '-' + extraKey : '')
+	console.log('notification:', key);
+	eventQueue.add(key, { reviewIndex: reviewIndex, message: message });
+}
+
+var eventQueue = ThrottleQueue('notifications', handleEvent);
+
+function handleEvent(events) {
+	
+}
 
 function getReviewAndSend(mailTitle, reviewIndex) {
 	Reviews.getReview(reviewIndex).then(function (review) {
