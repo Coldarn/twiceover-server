@@ -3,10 +3,10 @@ var path = require('path');
 var sqlite3 = require('sqlite3');
 var Promise = require('bluebird');
 
-var config = require('./config.json');
+var config = require('./../../config.json');
 
 var proto = {
-	throttleDelay: 60000,	// 1 Minute throttle window by default
+	throttleDelay: 1 * 60000,	// 1 Minute throttle window by default
 	db: null,
 	handlerFn: null,
 	

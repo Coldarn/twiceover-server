@@ -17,6 +17,10 @@ var proto = {
         var other = User(otherUser);
         return other.email.toLocaleLowerCase() === this.email.toLocaleLowerCase();
     },
+    
+    getName: function () {
+        return this.name || this.email;
+    },
 
     toString: function () {
         return this.name ? (this.name + ' <' + this.email + '>') : this.email;

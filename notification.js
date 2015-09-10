@@ -33,7 +33,7 @@ module.exports = {
 	
 	reviewerJoined: function (reviewIndex, newReviewer) {
 		var user = User(newReviewer);
-		getReviewAndSend('Review ' + reviewIndex + ': ' + (user.name || user.email) + ' Joined!', reviewIndex);
+		getReviewAndSend('Review ' + reviewIndex + ': ' + user.getName() + ' Joined!', reviewIndex);
 	},
 	
 	changeReviewStatus: function (reviewIndex, status, statusLabel) {
@@ -42,42 +42,42 @@ module.exports = {
 	
 	changeReviewerStatus: function (reviewIndex, email, status, statusLabel) {
 		var user = User(email);
-		queueEvent('changeReviewerStatus', reviewIndex, user.name || user.email
-			+ ' changed status to ' + statusLabel, user.email);
+		queueEvent('changeReviewerStatus', reviewIndex, user.getName() + ' changed status to ' + statusLabel, user.email);
 	}
 };
 
+var eventQueue = ThrottleQueue('notifications', function handleEvent(events) {
+	events.forEach(function (event) {
+		getReviewAndSend('Review ' + event.data.reviewIndex + ': ' + event.data.message, event.data.reviewIndex);
+	});
+});
+
 function queueEvent(eventType, reviewIndex, message, extraKey) {
-	var key = reviewIndex + '-' + eventType + (extraKey ? '-' + extraKey : '')
-	console.log('notification:', key);
+	var key = reviewIndex + '-' + eventType + (extraKey ? '-' + extraKey : '').toLowerCase();
 	eventQueue.add(key, { reviewIndex: reviewIndex, message: message });
 }
 
-var eventQueue = ThrottleQueue('notifications', handleEvent);
-
-function handleEvent(events) {
-	
-}
-
 function getReviewAndSend(mailTitle, reviewIndex) {
+	console.log('notification:', mailTitle);
+	if (!sender) {
+		return;
+	}
 	Reviews.getReview(reviewIndex).then(function (review) {
 		review.downloadLink = CLIENT_DOWNLOAD_LINK;
 		review.reviewLink = buildReviewLink(review.ix);
 		sendMail(mailTitle, review);
 	}, function (err) {
 		console.error(err);
-	})
+	});
 }
 
 function sendMail(mailTitle, review) {
+	if (!sender) {
+		return;
+	}
 	review.downloadLink = CLIENT_DOWNLOAD_LINK;
 	review.reviewLink = buildReviewLink(review.ix);
 	cons.mustache('email/ReviewStatus.html', review).then(function (template) {
-		// console.log(template);
-		
-		if (!sender) {
-			return;
-		}
 		sender.sendMail({
 			from: FROM_ADDR,
 			replyTo: review.owner,
