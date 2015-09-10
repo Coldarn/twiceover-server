@@ -162,19 +162,21 @@ module.exports = {
 	
 	getReviewsIncludingReviewer: function (email) {
 		return doNext(function () {
+			var likeEmail = '%<' + email + '>%';
 			return db.allAsync('SELECT ix, title, owner, created AS whenCreated, status, statusLabel FROM reviews	\
 				WHERE owner LIKE ?																					\
-				OR ix IN (SELECT reviewIndex FROM reviewers WHERE email = ?)										\
-				ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email);
+				OR ix IN (SELECT reviewIndex FROM reviewers WHERE email = ? OR email LIKE ?)										\
+				ORDER BY created DESC LIMIT 1000', likeEmail, email, likeEmail);
 		});
 	},
 	
 	getReviewsExcludingReviewer: function (email) {
 		return doNext(function () {
+			var likeEmail = '%<' + email + '>%';
 			return db.allAsync('SELECT ix, title, owner, created AS whenCreated, status, statusLabel FROM reviews	\
 				WHERE owner NOT LIKE ?																				\
-				AND ix NOT IN (SELECT reviewIndex FROM reviewers WHERE email = ?)									\
-				ORDER BY created DESC LIMIT 1000', '%<' + email + '>%', email);
+				AND ix NOT IN (SELECT reviewIndex FROM reviewers WHERE email = ? OR email LIKE ?)									\
+				ORDER BY created DESC LIMIT 1000', likeEmail, email, likeEmail);
 		});
 	}
 };

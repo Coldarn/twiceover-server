@@ -185,6 +185,12 @@ describe('Reviews', function () {
 	});
 	
 	describe('#getReviews', function () {
+		it('matching by substring', function () {
+			return expect(Promise.all([
+				expect(Reviews.getReviewsIncludingReviewer('bob.smith@example.com')).to.eventually.have.length(5),
+				expect(Reviews.getReviewsExcludingReviewer('bob.smith@example.com')).to.eventually.have.length(0),
+			])).to.be.fulfilled;							
+		});
 		it('..IncludingReviewer before adding a reviewer', function () {
 			return expect(Reviews.getReviewsIncludingReviewer('bob@foo.com'))
 				.to.become([{
