@@ -114,18 +114,18 @@ var proto = {
 				case 'changeReviewStatus':
 					message = {
 						status: event.data.status,
-						statusLabel: event.data.statusLabel,
+						statusLabel: event.data.label,
 						whenUpdated: Math.floor(event.id)
 					};
 					Reviews.updateMetadata(me.reviewIndex, message).then(function () {
-						Notification.changeReviewStatus(me.reviewIndex, event.data.status, event.data.statusLabel);
+						Notification.changeReviewStatus(me.reviewIndex, event.data.status, event.data.label);
 					});
 					break;
 				case 'changeReviewerStatus':
 					message = {
 						name: event.data.reviewer,
 						status: event.data.status,
-						statusLabel: event.data.statusLabel
+						statusLabel: event.data.label
 					};
 					Reviews.updateReviewerStatus(me.reviewIndex, message).then(function () {
 						Notification.changeReviewerStatus(me.reviewIndex, event.data.reviewer, event.data.status, event.data.label);
