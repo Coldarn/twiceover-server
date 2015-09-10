@@ -1,6 +1,6 @@
 {
   "name": "twiceover-server",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "Server backend for sharing code reviews made in twiceover-client",
   "main": "index.js",
   "scripts": {

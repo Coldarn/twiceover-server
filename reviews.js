@@ -26,7 +26,7 @@ var updateColumns = {
 // Don't care if any of these fail, that just means they've already been run
 var dbPromise = Promise.settle([
 	db.runAsync("CREATE TABLE reviews (ix INTEGER PRIMARY KEY, id TEXT UNIQUE, title TEXT, description TEXT, owner TEXT, "
-		+ "created INT, status TEXT NOT NULL)"),
+		+ "created INT, status TEXT NOT NULL DEFAULT 'active')"),
 	db.runAsync('ALTER TABLE reviews ADD COLUMN statusLabel TEXT'),
 	db.runAsync('ALTER TABLE reviews ADD COLUMN updated INT'),
 		
