@@ -30,7 +30,7 @@
 		{
 			"name": "Tests",
 			"type": "node",
-			"program": ".settings/mocha.js",
+			"program": ".vscode/mocha.js",
 			"isTestCommand": true,
 			"stopOnEntry": false,
 			"args": [],
