@@ -82,12 +82,13 @@ var proto = {
 			if (err) return;	// The record is already saved
 			
 			me.eventLog.push(event);
-			console.log('event:', event.id, event.type, event.user);
+			console.log('  ', me.reviewIndex + ':', event.id, event.type, event.user);
 			
 			switch (event.type) {
 				case 'newReview':
 					var review = {
 						ix: me.reviewIndex,
+						id: event.data.id,
 						owner: event.user,
 						title: event.data.title,
 						description: event.data.description,
@@ -104,6 +105,11 @@ var proto = {
 							return { name: email, status: null, statusLabel: null };
 						});
 						Notification.newReview(review);
+					});
+					break;
+				case 'addReviewer':
+					Reviews.addReviewers(me.reviewIndex, [event.data.reviewer]).then(function () {
+						Notification.reviewerAdded(me.reviewIndex, event.data.reviewer);
 					});
 					break;
 				case 'reviewerJoined':

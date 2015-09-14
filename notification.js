@@ -21,8 +21,8 @@ var FROM_ADDR = '"Twice-Over" <no-reply@' + HOST_INFO.name + '>';
 var PORT_STR = HOST_INFO.port && HOST_INFO.port != 80 ? ':' + HOST_INFO.port : '';
 var CLIENT_DOWNLOAD_LINK = ['http://', HOST_INFO.name, PORT_STR, '/Twice-OverSetup.exe'].join('');
 
-function buildReviewLink(reviewIndex) {
-	return ['twiceover://', HOST_INFO.name, PORT_STR, '/api/review/', reviewIndex].join('');
+function buildReviewLink(reviewId) {
+	return ['twiceover://', HOST_INFO.name, PORT_STR, '/review/', reviewId].join('');
 }
 
 module.exports = {
@@ -34,6 +34,11 @@ module.exports = {
 	reviewerJoined: function (reviewIndex, newReviewer) {
 		var user = User(newReviewer);
 		getReviewAndSend('Review ' + reviewIndex + ': ' + user.getName() + ' Joined!', reviewIndex);
+	},
+	
+	reviewerAdded: function (reviewIndex, newReviewer) {
+		var user = User(newReviewer);
+		getReviewAndSend('Review ' + reviewIndex + ': ' + user.getName() + ' Invited!', reviewIndex);
 	},
 	
 	changeReviewStatus: function (reviewIndex, status, statusLabel) {
