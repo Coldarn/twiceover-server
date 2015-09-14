@@ -1,0 +1,18 @@
+Code Review {{ix}}: {{title}}
+
+Click or copy this to open:
+{{reviewLink}}
+
+Description:
+{{description}}
+
+Review Owner: {{owner}}
+Status: {{status}}, {{statusLabel}}
+
+Reviewers:{{#reviewers}}
+{{name}}: {{status}}, {{statusLabel}}{{/reviewers}}
+
+
+
+Click here to install Twice-Over to open this review:
+{{downloadLink}}

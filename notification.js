@@ -63,8 +63,6 @@ function getReviewAndSend(mailTitle, reviewIndex) {
 		return;
 	}
 	Reviews.getReview(reviewIndex).then(function (review) {
-		review.downloadLink = CLIENT_DOWNLOAD_LINK;
-		review.reviewLink = buildReviewLink(review.ix);
 		sendMail(mailTitle, review);
 	}, function (err) {
 		console.error(err);
@@ -76,15 +74,18 @@ function sendMail(mailTitle, review) {
 		return;
 	}
 	review.downloadLink = CLIENT_DOWNLOAD_LINK;
-	review.reviewLink = buildReviewLink(review.ix);
-	cons.mustache('email/ReviewStatus.html', review).then(function (template) {
+	review.reviewLink = buildReviewLink(review.id);
+	Promise.all([
+		cons.mustache('email/ReviewStatus.html', review),
+		cons.mustache('email/ReviewStatus.txt', review)
+	]).then(function (templates) {
 		sender.sendMail({
 			from: FROM_ADDR,
 			replyTo: review.owner,
 			to: [review.owner].concat(review.reviewers),
-			subject: 'New Review: ' + review.title,
-			text: review.reviewLink + '\n\n' + review.description,
-			html: template
+			subject: mailTitle,
+			text: templates[1],
+			html: templates[0]
 		}, function (err, info) {
 			if (err) return console.error(err);
 			console.log(info.response);
