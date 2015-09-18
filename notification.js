@@ -87,7 +87,7 @@ function sendMail(mailTitle, review) {
 		sender.sendMail({
 			from: FROM_ADDR,
 			replyTo: review.owner,
-			to: [review.owner].concat(review.reviewers),
+			to: [review.owner].concat(review.reviewers.map(function (r) { return r.name; })),
 			subject: mailTitle,
 			text: templates[1],
 			html: templates[0]
