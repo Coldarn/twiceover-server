@@ -1,33 +1,24 @@
+/* global before */
 /* global it */
 /* global describe */
 
 var chai = require('chai');
 chai.use(require("chai-as-promised"));
 var expect = chai.expect;
-	
-var fs = require('fs');
-var path = require('path');
+var Promise = require('bluebird');
 
-var TEST_FILES = 'test/files';
-var TEST_TEMPLATES = 'test/templates';
+var TestHelper = require('./test-helper.js');
 
 var Data = {};
-var config = require('../config.json');
 var Reviews;
 
 describe('Reviews', function () {
-	it('setup', function (done) {
-		config.reviews.path = TEST_FILES;
-		fs.unlink(path.join(TEST_FILES, config.reviews.database), function () {
-			var templateFile = fs.createReadStream(path.join(TEST_TEMPLATES, config.reviews.database));
-			
-			templateFile.pipe(fs.createWriteStream(path.join(TEST_FILES, config.reviews.database)));
-			templateFile.on('end', done);
-		});
+	before(function () {
+		TestHelper.setupTestFolder(__filename, ['reviews.db']);
 	});
 	
 	it('module should initialize properly', function () {
-		Reviews = require('../reviews.js');
+		Reviews = require('../srv/reviews.js');
 		expect(Reviews).to.be.ok;
 		
 		// Turn off error logging to keep the run reports clean
