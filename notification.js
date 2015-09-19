@@ -33,7 +33,7 @@ module.exports = {
 	
 	reviewerJoined: function (reviewIndex, newReviewer) {
 		var user = User(newReviewer);
-		getReviewAndSend('Review ' + reviewIndex + ': ' + user.getName() + ' Joined!', reviewIndex);
+		getReviewAndSend('Review ' + reviewIndex + ': ' + user.getName() + ' Joined!', reviewIndex, true);
 	},
 	
 	reviewerAdded: function (reviewIndex, newReviewer) {
@@ -62,19 +62,19 @@ function queueEvent(eventType, reviewIndex, message, extraKey) {
 	eventQueue.add(key, { reviewIndex: reviewIndex, message: message });
 }
 
-function getReviewAndSend(mailTitle, reviewIndex) {
+function getReviewAndSend(mailTitle, reviewIndex, sendOnlyToOwner) {
 	console.log('notification:', mailTitle);
 	if (!sender) {
 		return;
 	}
 	Reviews.getReview(reviewIndex).then(function (review) {
-		sendMail(mailTitle, review);
+		sendMail(mailTitle, review, sendOnlyToOwner);
 	}, function (err) {
 		console.error(err);
 	});
 }
 
-function sendMail(mailTitle, review) {
+function sendMail(mailTitle, review, sendOnlyToOwner) {
 	if (!sender) {
 		return;
 	}
@@ -87,7 +87,9 @@ function sendMail(mailTitle, review) {
 		sender.sendMail({
 			from: FROM_ADDR,
 			replyTo: review.owner,
-			to: [review.owner].concat(review.reviewers.map(function (r) { return r.name; })),
+			to: sendOnlyToOwner
+				? review.owner
+				: [review.owner].concat(review.reviewers.map(function (r) { return r.name; })),
 			subject: mailTitle,
 			text: templates[1],
 			html: templates[0]
