@@ -6,8 +6,8 @@ var path = require('path');
 var WebSocketServer = require('ws').Server;
 var http = require('http');
 	
-var Reviews = require('./reviews.js');
-var Review = require('./review.js');
+var Reviews = require('./srv/reviews.js');
+var Review = require('./srv/review.js');
 
 var HOST_INFO = require('./config.json').host;
 

@@ -5,8 +5,8 @@ var path = require('path');
 var sqlite3 = require('sqlite3');
 var Promise = require('bluebird');
 
-var User = require('./user.js');
-var config = require('./config.json');
+var User = require('./util/user.js');
+var config = require('../config.json');
 
 Promise.promisifyAll(sqlite3.Database.prototype);
 Promise.promisifyAll(sqlite3.Statement.prototype);

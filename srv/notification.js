@@ -12,10 +12,10 @@ if (!fs.existsSync('mailserver.json')) {
 }
 
 
-var HOST_INFO = require('./config.json').host;
-var User = require('./user.js');
+var HOST_INFO = require('../config.json').host;
+var User = require('./util/user.js');
 var Reviews = require('./reviews.js');
-var ThrottleQueue = require('./srv/util/ThrottleQueue.js');
+var ThrottleQueue = require('./util/ThrottleQueue.js');
 
 var FROM_ADDR = '"Twice-Over" <no-reply@' + HOST_INFO.name + '>';
 var PORT_STR = HOST_INFO.port && HOST_INFO.port != 80 ? ':' + HOST_INFO.port : '';
