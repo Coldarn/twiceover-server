@@ -53,5 +53,6 @@ function ThrottleQueue(queueName, eventHandlerFn) {
 	
 	return obj;
 }
+ThrottleQueue.prototype = proto;
 
 module.exports = ThrottleQueue;

@@ -17,5 +17,6 @@ module.exports = {
 				fs.copySync(path.join(TEST_TEMPLATES, filename), path.join(testDir, filename));
 			});
 		}
+		return config;
 	}
 };

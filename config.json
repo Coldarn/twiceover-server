@@ -6,5 +6,9 @@
 	"reviews": {
 		"path": "reviews",
 		"database": "reviews.db"
+	},
+	"mailserver": {
+		"__readme": "Fill with SMTP server info to enable email notification, as documented here: https://github.com/andris9/nodemailer-smtp-transport#usage", 
+		"host": null
 	}
 }

@@ -4,18 +4,17 @@ var nodemailer = require('nodemailer');
 var smtpTransport = require('nodemailer-smtp-transport');
 var cons = require('consolidate');
 
-if (!fs.existsSync('mailserver.json')) {
-	console.warn('File "mailserver.json" not found, disabling email notification.')
-	console.warn('To enable it, place the file next to package.json and fill it with an options configuration object, as documented here:\nhttps://github.com/andris9/nodemailer-smtp-transport#usage\n');
-} else {
-	var sender = nodemailer.createTransport(smtpTransport(JSON.parse(fs.readFileSync('mailserver.json'))));
-}
-
-
-var HOST_INFO = require('../config.json').host;
+var CONFIG = require('../config.json');
+var HOST_INFO = CONFIG.host;
 var User = require('./util/user.js');
 var Reviews = require('./reviews.js');
 var ThrottleQueue = require('./util/ThrottleQueue.js');
+
+if (!CONFIG.mailserver.host) {
+	console.warn('To enable email notification, put SMTP connection details into config.json#mailserver as documented here:\nhttps://github.com/andris9/nodemailer-smtp-transport#usage\n');
+} else {
+	var sender = nodemailer.createTransport(smtpTransport(CONFIG.mailserver));
+}
 
 var FROM_ADDR = '"Twice-Over" <no-reply@' + HOST_INFO.name + '>';
 var PORT_STR = HOST_INFO.port && HOST_INFO.port != 80 ? ':' + HOST_INFO.port : '';
@@ -26,8 +25,10 @@ function buildReviewLink(reviewId) {
 }
 
 module.exports = {
+	logEvents: true,
+	
 	newReview: function (review) {
-		console.log('notification: newReview', review.ix);
+		log('notification: newReview', review.ix);
 		sendMail('New Review ' + review.ix + ': ' + review.title, review);
 	},
 	
@@ -51,6 +52,12 @@ module.exports = {
 	}
 };
 
+function log() {
+	if (module.exports.logEvents) {
+		console.log.apply(console, arguments);
+	}
+}
+
 var eventQueue = ThrottleQueue('notifications', function handleEvent(events) {
 	events.forEach(function (event) {
 		getReviewAndSend('Review ' + event.data.reviewIndex + ': ' + event.data.message, event.data.reviewIndex);
@@ -63,7 +70,7 @@ function queueEvent(eventType, reviewIndex, message, extraKey) {
 }
 
 function getReviewAndSend(mailTitle, reviewIndex, sendOnlyToOwner) {
-	console.log('notification:', mailTitle);
+	log('notification:', mailTitle);
 	if (!sender) {
 		return;
 	}
@@ -95,7 +102,7 @@ function sendMail(mailTitle, review, sendOnlyToOwner) {
 			html: templates[0]
 		}, function (err, info) {
 			if (err) return console.error(err);
-			console.log(info.response);
+			log(info.response);
 		});
 	});
 }
