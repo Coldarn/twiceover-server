@@ -55,7 +55,32 @@ describe('Notification', function () {
 					expect(sendSpy.callCount).to.equal(1);
 					expect(sendSpy.firstCall.args).to.have.length(2);
 					expect(sendSpy.firstCall.args[0].subject).to.equal("New Review 2: Bob's Code Review #2");
-					expect(sendSpy.firstCall.args[0].to).to.have.length(5);
+					expect(sendSpy.firstCall.args[0].to).to.have.length(4);
+					expect(sendSpy.firstCall.args[0].replyTo).to.equal("John Doe <john.doe@example.com>");
+				})).to.be.fulfilled;
+		});
+	});
+	
+	describe('reviewerJoined', function () {
+		it('should send emails immediately', function () {
+			sandbox.stub(Reviews, 'getReview', function (ixOrId) {
+				return Promise.resolve(Data.reviews[2]);
+			});
+			Notification.reviewerJoined(2, "John Smith <john.smith@example.com>");
+			return expect(waitForSendMail()).to.be.fulfilled;
+		});
+		
+		it('should send mail with expected values', function () {
+			sandbox.stub(Reviews, 'getReview', function (ixOrId) {
+				return Promise.resolve(Data.reviews[2]);
+			});
+			Notification.reviewerJoined(2, "John Smith <john.smith@example.com>");
+			return expect(waitForSendMail()
+				.then(function (sendSpy) {
+					expect(sendSpy.callCount).to.equal(1);
+					expect(sendSpy.firstCall.args).to.have.length(2);
+					expect(sendSpy.firstCall.args[0].subject).to.equal("Review 2: John Smith Joined!");
+					expect(sendSpy.firstCall.args[0].to).to.equal("John Doe <john.doe@example.com>");
 					expect(sendSpy.firstCall.args[0].replyTo).to.equal("John Doe <john.doe@example.com>");
 				})).to.be.fulfilled;
 		});
@@ -89,9 +114,8 @@ Data.reviews = {
 		"whenUpdated":1440559322417,
 		"reviewers":[
 			{"name":"bob.smith@example.com","status":null,"statusLabel":null},
-			{"name":"bonzai@foo.com","status":null,"statusLabel":null},
 			{"name":"john.doe@example.com","status":null,"statusLabel":null},
-			{"name":"john.smith@example.com","status":null,"statusLabel":null}
+			{"name":"John Smith <john.smith@example.com>","status":null,"statusLabel":null}
 		]
 	},
 	6: {
