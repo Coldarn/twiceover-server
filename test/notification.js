@@ -42,11 +42,23 @@ describe('Notification', function () {
 		Notification.logEvents = false;
 	});
 	
-	it('should send newReview emails immediately', function () {
-		expect(Reviews.getReview(1)
-			.then(Notification.newReview))
-			.to.be.fulfilled;
-		return waitForSendMail();
+	describe('newReview', function () {
+		it('should send emails immediately', function () {
+			Notification.newReview(Data.reviews[2]);
+			return expect(waitForSendMail()).to.be.fulfilled;
+		});
+		
+		it('should send mail with expected values', function () {
+			Notification.newReview(Data.reviews[2]);
+			return expect(waitForSendMail()
+				.then(function (sendSpy) {
+					expect(sendSpy.callCount).to.equal(1);
+					expect(sendSpy.firstCall.args).to.have.length(2);
+					expect(sendSpy.firstCall.args[0].subject).to.equal("New Review 2: Bob's Code Review #2");
+					expect(sendSpy.firstCall.args[0].to).to.have.length(5);
+					expect(sendSpy.firstCall.args[0].replyTo).to.equal("John Doe <john.doe@example.com>");
+				})).to.be.fulfilled;
+		});
 	});
 });
 
@@ -55,11 +67,43 @@ function waitForSendMail() {
 		var sendSpy = sandbox.spy(sender, 'sendMail');
 		function check() {
 			if (sendSpy.called) {
-				resolve();
+				resolve(sendSpy);
 			} else {
 				setTimeout(check, 5);
 			}
 		}
 		check();
 	});
+}
+
+Data.reviews = {
+	2: {
+		"ix":2,
+		"id":"7kULUz32rDthib47gMQQMoc",
+		"title":"Bob's Code Review #2",
+		"description":"",
+		"owner":"John Doe <john.doe@example.com>",
+		"whenCreated":1440047582964,
+		"status":"complete",
+		"statusLabel":null,
+		"whenUpdated":1440559322417,
+		"reviewers":[
+			{"name":"bob.smith@example.com","status":null,"statusLabel":null},
+			{"name":"bonzai@foo.com","status":null,"statusLabel":null},
+			{"name":"john.doe@example.com","status":null,"statusLabel":null},
+			{"name":"john.smith@example.com","status":null,"statusLabel":null}
+		]
+	},
+	6: {
+		"ix":6,
+		"id":"7kULUz32rDthib47gMQQMo0",
+		"title":null,
+		"description":null,
+		"owner":null,
+		"whenCreated":null,
+		"status":"active",
+		"statusLabel":null,
+		"whenUpdated":null,
+		"reviewers":[]
+	}
 }
